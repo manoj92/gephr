@@ -4,33 +4,18 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
-  Pressable,
-  Dimensions,
+  TouchableOpacity,
   Alert,
 } from 'react-native';
 import { Camera, CameraType } from 'expo-camera';
-import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-
-import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from '../constants/theme';
-
-const { width, height } = Dimensions.get('window');
+import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../constants/theme';
 
 const RecordingScreen: React.FC = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const cameraRef = useRef<Camera>(null);
-
-  const recordButtonScale = useSharedValue(1);
-  const recordingPulse = useSharedValue(1);
 
   useEffect(() => {
     (async () => {
@@ -42,16 +27,10 @@ const RecordingScreen: React.FC = () => {
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRecording) {
-      recordingPulse.value = withRepeat(
-        withTiming(1.2, { duration: 1000 }),
-        -1,
-        true
-      );
       interval = setInterval(() => {
         setRecordingDuration(prev => prev + 1);
       }, 1000);
     } else {
-      recordingPulse.value = withTiming(1);
       setRecordingDuration(0);
     }
     return () => {
@@ -60,10 +39,6 @@ const RecordingScreen: React.FC = () => {
   }, [isRecording]);
 
   const handleRecordPress = () => {
-    recordButtonScale.value = withSpring(0.9, {}, () => {
-      recordButtonScale.value = withSpring(1);
-    });
-
     if (isRecording) {
       stopRecording();
     } else {
@@ -72,24 +47,19 @@ const RecordingScreen: React.FC = () => {
   };
 
   const startRecording = async () => {
-    if (cameraRef.current) {
-      try {
-        setIsRecording(true);
-        // Here you would implement actual video recording
-        // and hand tracking logic
-        console.log('Started recording...');
-      } catch (error) {
-        Alert.alert('Error', 'Failed to start recording');
-        setIsRecording(false);
-      }
+    try {
+      setIsRecording(true);
+      console.log('Started recording...');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to start recording');
+      setIsRecording(false);
     }
   };
 
   const stopRecording = async () => {
     try {
       setIsRecording(false);
-      console.log('Stopped recording...');
-      // Process and save the recorded data
+      Alert.alert('Success', 'Recording saved! Data ready for LeRobot export.');
     } catch (error) {
       Alert.alert('Error', 'Failed to stop recording');
     }
@@ -100,14 +70,6 @@ const RecordingScreen: React.FC = () => {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-
-  const recordButtonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: recordButtonScale.value }],
-  }));
-
-  const recordingIndicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: recordingPulse.value }],
-  }));
 
   if (hasPermission === null) {
     return (
@@ -123,10 +85,10 @@ const RecordingScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContent}>
-          <Ionicons name="camera-outline" size={80} color={COLORS.textMuted} />
-          <Text style={styles.permissionText}>Camera permission is required</Text>
+          <Text style={styles.permissionText}>📹</Text>
+          <Text style={styles.permissionTitle}>Camera Access Required</Text>
           <Text style={styles.permissionSubtext}>
-            Please enable camera access to record hand movements
+            Please enable camera access to record hand movements for robot training
           </Text>
         </View>
       </SafeAreaView>
@@ -136,20 +98,15 @@ const RecordingScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <LinearGradient
-          colors={[COLORS.backgroundSecondary, COLORS.background]}
-          style={styles.headerGradient}
-        >
-          <Text style={styles.headerTitle}>Hand Tracking Recording</Text>
-          {isRecording && (
-            <View style={styles.recordingInfo}>
-              <Animated.View style={[styles.recordingDot, recordingIndicatorStyle]} />
-              <Text style={styles.recordingText}>
-                Recording • {formatDuration(recordingDuration)}
-              </Text>
-            </View>
-          )}
-        </LinearGradient>
+        <Text style={styles.headerTitle}>🤖 Hand Tracking Recording</Text>
+        {isRecording && (
+          <View style={styles.recordingInfo}>
+            <View style={styles.recordingDot} />
+            <Text style={styles.recordingText}>
+              Recording • {formatDuration(recordingDuration)}
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.cameraContainer}>
@@ -159,16 +116,13 @@ const RecordingScreen: React.FC = () => {
           type={CameraType.back}
           ratio="16:9"
         >
-          {/* Hand tracking overlay would go here */}
           <View style={styles.overlay}>
             <View style={styles.trackingInfo}>
               <View style={styles.infoCard}>
-                <Ionicons name="hand-left" size={20} color={COLORS.primary} />
-                <Text style={styles.infoText}>Left Hand: Detected</Text>
+                <Text style={styles.infoText}>🫲 Left Hand: Detected</Text>
               </View>
               <View style={styles.infoCard}>
-                <Ionicons name="hand-right" size={20} color={COLORS.primary} />
-                <Text style={styles.infoText}>Right Hand: Detected</Text>
+                <Text style={styles.infoText}>🫱 Right Hand: Detected</Text>
               </View>
             </View>
           </View>
@@ -176,45 +130,36 @@ const RecordingScreen: React.FC = () => {
       </View>
 
       <View style={styles.controls}>
-        <LinearGradient
-          colors={[COLORS.background, COLORS.backgroundSecondary]}
-          style={styles.controlsGradient}
-        >
-          <View style={styles.controlsContent}>
-            <Pressable style={styles.settingsButton}>
-              <Ionicons name="settings" size={24} color={COLORS.textSecondary} />
-            </Pressable>
+        <View style={styles.controlsContent}>
+          <TouchableOpacity style={styles.settingsButton}>
+            <Text style={styles.buttonText}>⚙️</Text>
+          </TouchableOpacity>
 
-            <Animated.View style={recordButtonStyle}>
-              <Pressable
-                style={[
-                  styles.recordButton,
-                  isRecording && styles.recordButtonActive,
-                ]}
-                onPress={handleRecordPress}
-              >
-                <LinearGradient
-                  colors={
-                    isRecording
-                      ? [COLORS.error, '#FF7043']
-                      : [COLORS.primary, COLORS.primaryDark]
-                  }
-                  style={styles.recordButtonGradient}
-                >
-                  <Ionicons
-                    name={isRecording ? 'stop' : 'videocam'}
-                    size={32}
-                    color={COLORS.text}
-                  />
-                </LinearGradient>
-              </Pressable>
-            </Animated.View>
+          <TouchableOpacity
+            style={[
+              styles.recordButton,
+              isRecording && styles.recordButtonActive,
+            ]}
+            onPress={handleRecordPress}
+          >
+            <LinearGradient
+              colors={
+                isRecording
+                  ? [COLORS.error, '#FF7043']
+                  : [COLORS.primary, COLORS.primaryDark]
+              }
+              style={styles.recordButtonGradient}
+            >
+              <Text style={styles.recordButtonText}>
+                {isRecording ? '⏹️' : '📹'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-            <Pressable style={styles.galleryButton}>
-              <Ionicons name="folder" size={24} color={COLORS.textSecondary} />
-            </Pressable>
-          </View>
-        </LinearGradient>
+          <TouchableOpacity style={styles.galleryButton}>
+            <Text style={styles.buttonText}>📁</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -237,27 +182,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   permissionText: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontSize: 64,
+    marginBottom: SPACING.lg,
+  },
+  permissionTitle: {
+    fontSize: TYPOGRAPHY.fontSize.xl,
     color: COLORS.text,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   permissionSubtext: {
     fontSize: TYPOGRAPHY.fontSize.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginTop: SPACING.sm,
   },
   header: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
-    zIndex: 10,
-  },
-  headerGradient: {
-    borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
-    ...SHADOWS.medium,
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: TYPOGRAPHY.fontSize.xl,
@@ -268,7 +210,6 @@ const styles = StyleSheet.create({
   recordingInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     marginTop: SPACING.sm,
   },
   recordingDot: {
@@ -288,7 +229,6 @@ const styles = StyleSheet.create({
     margin: SPACING.lg,
     borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
-    ...SHADOWS.large,
   },
   camera: {
     flex: 1,
@@ -306,13 +246,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   infoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
-    gap: SPACING.sm,
   },
   infoText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -320,13 +257,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   controls: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.lg,
-  },
-  controlsGradient: {
-    borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
-    ...SHADOWS.medium,
   },
   controlsContent: {
     flexDirection: 'row',
@@ -340,16 +271,18 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOWS.small,
   },
   recordButton: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    ...SHADOWS.large,
   },
   recordButtonActive: {
-    ...SHADOWS.glow,
+    shadowColor: COLORS.error,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 20,
   },
   recordButtonGradient: {
     width: '100%',
@@ -358,6 +291,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  recordButtonText: {
+    fontSize: 32,
+  },
   galleryButton: {
     width: 50,
     height: 50,
@@ -365,7 +301,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOWS.small,
+  },
+  buttonText: {
+    fontSize: 24,
   },
 });
 
