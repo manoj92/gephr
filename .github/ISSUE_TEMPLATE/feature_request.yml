@@ -1,0 +1,172 @@
+name: ✨ Feature Request
+description: Suggest an idea or enhancement for the Humanoid Training Platform
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a new feature! 🚀
+        
+        Your ideas help make the platform better for everyone in the robotics community.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please verify these items before submitting
+      options:
+        - label: I have searched existing issues and discussions for similar requests
+          required: true
+        - label: This feature would benefit the broader robotics community
+          required: true
+        - label: I have provided detailed information below
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What's the current pain point?
+      placeholder: "Currently, users can't... which makes it difficult to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the feature you'd like to see implemented
+      placeholder: "I would like to see a feature that allows users to..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: Which area does this feature relate to?
+      options:
+        - Hand Tracking & Computer Vision
+        - Robot Communication & Control
+        - User Interface & Experience
+        - Data Export & LeRobot Integration
+        - 3D Mapping & Environment
+        - Marketplace & Economy
+        - Performance & Optimization
+        - Accessibility
+        - Developer Tools
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important is this feature?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve workflow
+        - High - Significantly impacts usability
+        - Critical - Blocking major use case
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: Target Platforms
+      description: Which platforms should this feature support?
+      options:
+        - label: iOS
+        - label: Android
+        - label: Both platforms
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: Describe this feature from a user's perspective
+      placeholder: "As a [type of user], I want to [action] so that [benefit]"
+    validations:
+      required: true
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups/Examples
+      description: Do you have any mockups, sketches, or examples from other apps?
+      placeholder: "Attach images or describe similar implementations..."
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: What other approaches have you considered?
+      placeholder: "Instead of this approach, we could also..."
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases
+      description: Provide specific examples of how this feature would be used
+      placeholder: |
+        1. Factory worker training: User could...
+        2. Home automation: Robot could...
+        3. Research application: Scientists could...
+
+  - type: checkboxes
+    id: implementation
+    attributes:
+      label: Implementation Considerations
+      description: What technical aspects should be considered?
+      options:
+        - label: Requires new UI components
+        - label: Needs backend/API changes
+        - label: Involves computer vision/ML
+        - label: Affects robot communication
+        - label: Performance impact
+        - label: Privacy/security considerations
+        - label: Accessibility requirements
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Estimated Complexity
+      description: How complex do you think this feature would be to implement?
+      options:
+        - Simple - Small UI change or minor feature
+        - Medium - New component or moderate functionality
+        - Complex - Major feature requiring significant work
+        - Very Complex - Architectural changes or research needed
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected Impact
+      description: How would this feature benefit users and the robotics community?
+      placeholder: "This would help users by... and advance robotics by..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution Interest
+      description: Would you be interested in helping implement this feature?
+      options:
+        - label: I'd like to work on this myself
+        - label: I could help with design/mockups
+        - label: I could help with testing
+        - label: I could provide domain expertise
+        - label: I'd prefer others implement this
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other information that would help us understand this request?
+      placeholder: "Related to issue #123, inspired by research paper XYZ, etc." 
