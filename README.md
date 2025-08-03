@@ -72,8 +72,6 @@ src/
 | Robot | Status | Capabilities |
 |-------|--------|-------------|
 | Unitree G1 | Full Support | Navigation, Manipulation, Vision |
-| Boston Dynamics Spot | Supported | Navigation, Vision |
-| Tesla Optimus | In Progress | Vision, Fine Motor |
 | Custom Robots | Via ROS/ROS2 | Configurable |
 
 ## How It Works
@@ -144,7 +142,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Community
 
-- [Discord Server](https://discord.gg/humanoid-training)
 - [Report Issues](https://github.com/yourusername/humanoid-training-platform/issues)
 - Email: hello@humanoidtraining.dev
 
