@@ -42,15 +42,6 @@ npx expo start
 2. Grant camera permissions
 3. Start recording hand movements!
 
-## Screenshots
-
-<p align="center">
-  <img src="docs/images/home-screen.png" width="200" alt="Home Screen" />
-  <img src="docs/images/recording-screen.png" width="200" alt="Recording Screen" />
-  <img src="docs/images/marketplace-screen.png" width="200" alt="Marketplace Screen" />
-  <img src="docs/images/robot-screen.png" width="200" alt="Robot Control Screen" />
-</p>
-
 ## Architecture
 
 ```
@@ -142,7 +133,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Community
 
-- [Report Issues](https://github.com/manoj92/humanoid-training-platform/issues)
+- [Report Issues](https://github.com/manoj92/gephr/issues)
 - Email: info@gephr.com
 
 ## Acknowledgments
@@ -161,4 +152,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <p align="center">
   <strong>The future of robotics is in your pocket</strong><br>
   <em>Contribute to the building of the next generation of humanoid robots</em>
-</p> 
+</p>
