@@ -38,7 +38,7 @@ const MOCK_SKILLS: Skill[] = [
     creator: 'ChefBot Studios',
     category: 'Household',
     difficulty: 3,
-    thumbnail: '🍳',
+    thumbnail: 'Kitchen',
     tags: ['cooking', 'food prep', 'kitchen'],
   },
   {
@@ -51,7 +51,7 @@ const MOCK_SKILLS: Skill[] = [
     creator: 'IndustrialAI Corp',
     category: 'Industrial',
     difficulty: 4,
-    thumbnail: '🏭',
+    thumbnail: 'Factory',
     tags: ['assembly', 'factory', 'automation'],
   },
   {
@@ -64,7 +64,7 @@ const MOCK_SKILLS: Skill[] = [
     creator: 'CleanBot Labs',
     category: 'Household',
     difficulty: 2,
-    thumbnail: '🧹',
+    thumbnail: 'Cleaning',
     tags: ['cleaning', 'maintenance', 'household'],
   },
   {
@@ -77,7 +77,7 @@ const MOCK_SKILLS: Skill[] = [
     creator: 'LogiTech Robotics',
     category: 'Logistics',
     difficulty: 3,
-    thumbnail: '📦',
+    thumbnail: 'Package',
     tags: ['logistics', 'warehouse', 'inventory'],
   },
   {
@@ -90,7 +90,7 @@ const MOCK_SKILLS: Skill[] = [
     creator: 'GreenThumb AI',
     category: 'Outdoor',
     difficulty: 2,
-    thumbnail: '🌱',
+    thumbnail: 'Plant',
     tags: ['gardening', 'plants', 'outdoor'],
   },
   {
@@ -103,7 +103,7 @@ const MOCK_SKILLS: Skill[] = [
     creator: 'SecureBot Inc',
     category: 'Security',
     difficulty: 5,
-    thumbnail: '🛡️',
+    thumbnail: 'Shield',
     tags: ['security', 'patrol', 'monitoring'],
   },
 ];
@@ -126,7 +126,7 @@ const MarketplaceScreen: React.FC = () => {
   const handlePurchase = (skill: Skill) => {
     if (userCredits >= skill.price) {
       Alert.alert(
-        'Purchase Successful! 🎉',
+        'Purchase Successful!',
         `You've successfully purchased "${skill.name}" for $${skill.price}. The skill has been added to your robot.`,
         [
           {
@@ -158,7 +158,7 @@ const MarketplaceScreen: React.FC = () => {
   };
 
   const getDifficultyStars = (difficulty: number) => {
-    return '⭐'.repeat(difficulty) + '☆'.repeat(5 - difficulty);
+    return '*'.repeat(difficulty) + '-'.repeat(5 - difficulty);
   };
 
   const SkillCard: React.FC<{ skill: Skill }> = ({ skill }) => (
@@ -184,7 +184,7 @@ const MarketplaceScreen: React.FC = () => {
         <View style={styles.skillMeta}>
           <View style={styles.metaItem}>
             <Text style={styles.metaLabel}>Rating:</Text>
-            <Text style={styles.metaValue}>⭐ {skill.rating}</Text>
+            <Text style={styles.metaValue}>Rating: {skill.rating}</Text>
           </View>
           <View style={styles.metaItem}>
             <Text style={styles.metaLabel}>Downloads:</Text>
@@ -223,9 +223,9 @@ const MarketplaceScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🏪 Skills Marketplace</Text>
+        <Text style={styles.headerTitle}>Skills Marketplace</Text>
         <View style={styles.creditsContainer}>
-          <Text style={styles.creditsText}>💰 ${userCredits}</Text>
+          <Text style={styles.creditsText}>${userCredits}</Text>
         </View>
       </View>
 
@@ -269,7 +269,7 @@ const MarketplaceScreen: React.FC = () => {
           colors={[COLORS.accent, COLORS.accentSecondary]}
           style={styles.uploadButtonGradient}
         >
-          <Text style={styles.uploadButtonText}>📤 Upload Your Skill</Text>
+          <Text style={styles.uploadButtonText}>Upload Your Skill</Text>
         </LinearGradient>
       </TouchableOpacity>
 

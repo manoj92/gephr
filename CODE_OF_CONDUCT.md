@@ -1,6 +1,6 @@
 # Contributor Covenant Code of Conduct
 
-## 🤝 Our Pledge
+## Our Pledge
 
 We as members, contributors, and leaders pledge to make participation in our
 community a harassment-free experience for everyone, regardless of age, body
@@ -13,36 +13,36 @@ We pledge to act and interact in ways that contribute to an open, welcoming,
 diverse, inclusive, and healthy community focused on advancing robotics for
 the benefit of humanity.
 
-## 🌟 Our Standards
+## Our Standards
 
 Examples of behavior that contributes to a positive environment for our
 community include:
 
-* 🤗 Demonstrating empathy and kindness toward other people
-* 🎯 Being respectful of differing opinions, viewpoints, and experiences
-* 🙏 Giving and gracefully accepting constructive feedback
-* 🛠️ Accepting responsibility and apologizing to those affected by our mistakes,
+* Demonstrating empathy and kindness toward other people
+* Being respectful of differing opinions, viewpoints, and experiences
+* Giving and gracefully accepting constructive feedback
+* Accepting responsibility and apologizing to those affected by our mistakes,
   and learning from the experience
-* 🌍 Focusing on what is best not just for us as individuals, but for the
+* Focusing on what is best not just for us as individuals, but for the
   overall community and advancement of robotics
-* 🚀 Encouraging newcomers and helping them contribute to robotics
-* 📚 Sharing knowledge and helping others learn
-* 🔬 Promoting open science and reproducible research
+* Encouraging newcomers and helping them contribute to robotics
+* Sharing knowledge and helping others learn
+* Promoting open science and reproducible research
 
 Examples of unacceptable behavior include:
 
-* 🚫 The use of sexualized language or imagery, and sexual attention or
+* The use of sexualized language or imagery, and sexual attention or
   advances of any kind
-* 🚫 Trolling, insulting or derogatory comments, and personal or political attacks
-* 🚫 Public or private harassment
-* 🚫 Publishing others' private information, such as a physical or email
+* Trolling, insulting or derogatory comments, and personal or political attacks
+* Public or private harassment
+* Publishing others' private information, such as a physical or email
   address, without their explicit permission
-* 🚫 Other conduct which could reasonably be considered inappropriate in a
+* Other conduct which could reasonably be considered inappropriate in a
   professional setting
-* 🚫 Discouraging participation based on any protected characteristics
-* 🚫 Deliberately spreading misinformation about robotics or AI safety
+* Discouraging participation based on any protected characteristics
+* Deliberately spreading misinformation about robotics or AI safety
 
-## 🛡️ Enforcement Responsibilities
+## Enforcement Responsibilities
 
 Community leaders are responsible for clarifying and enforcing our standards of
 acceptable behavior and will take appropriate and fair corrective action in
@@ -54,7 +54,7 @@ comments, commits, code, wiki edits, issues, and other contributions that are
 not aligned to this Code of Conduct, and will communicate reasons for moderation
 decisions when appropriate.
 
-## 🌐 Scope
+## Scope
 
 This Code of Conduct applies within all community spaces, and also applies when
 an individual is officially representing the community in public spaces.
@@ -70,14 +70,14 @@ This includes:
 - Research collaborations
 - Robot demonstrations and public events
 
-## 🚨 Reporting Guidelines
+## Reporting Guidelines
 
 ### How to Report
 
 If you experience or witness unacceptable behavior, or have any other concerns,
 please report it by contacting the community team at:
 
-📧 **conduct@humanoidtraining.dev**
+**conduct@humanoidtraining.dev**
 
 All reports will be handled with discretion and confidentiality.
 
@@ -97,7 +97,7 @@ When reporting, please include:
 3. **Response**: We will respond with our decision and any actions taken
 4. **Follow-up**: We will follow up to ensure the situation is resolved
 
-## ⚖️ Enforcement Guidelines
+## Enforcement Guidelines
 
 Community leaders will follow these Community Impact Guidelines in determining
 the consequences for any action they deem in violation of this Code of Conduct:
@@ -143,7 +143,7 @@ individual, or aggression toward or disparagement of classes of individuals.
 **Consequence**: A permanent ban from any sort of public interaction within the
 community.
 
-## 🔬 Special Considerations for Robotics
+## Special Considerations for Robotics
 
 Given the nature of our project, we have additional guidelines specific to
 robotics and AI development:
@@ -172,7 +172,7 @@ robotics and AI development:
 - Share datasets and code when possible
 - Avoid conflicts of interest
 
-## 🤖 Robot Testing Ethics
+## Robot Testing Ethics
 
 When testing with physical robots:
 - Always follow safety protocols
@@ -181,7 +181,7 @@ When testing with physical robots:
 - Document and report any incidents
 - Never test in public without proper permissions
 
-## 🌍 Global Perspective
+## Global Perspective
 
 Our community spans the globe and includes people from many cultures and
 backgrounds. We commit to:
@@ -191,7 +191,7 @@ backgrounds. We commit to:
 - Providing content in multiple languages when possible
 - Considering diverse perspectives in decision-making
 
-## 🎓 Educational Mission
+## Educational Mission
 
 As an educational platform, we especially value:
 - Patient teaching and mentoring
@@ -200,7 +200,7 @@ As an educational platform, we especially value:
 - Supporting underrepresented groups in STEM
 - Promoting robotics education globally
 
-## 🔄 Updates and Feedback
+## Updates and Feedback
 
 This Code of Conduct is a living document. We welcome feedback from the
 community and will update it as needed to better serve our mission of
@@ -211,7 +211,7 @@ To suggest changes, please:
 2. Contact us at conduct@humanoidtraining.dev
 3. Discuss in our Discord community
 
-## 📖 Attribution
+## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org),
 version 2.1, available at
@@ -230,4 +230,4 @@ Translations are available at
 
 ---
 
-**Remember**: We're all here to advance robotics for the benefit of humanity. Let's work together with respect, kindness, and shared purpose! 🤖❤️ 
+**Remember**: We're all here to advance robotics for the benefit of humanity. Let's work together with respect, kindness, and shared purpose! 

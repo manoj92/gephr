@@ -90,7 +90,7 @@ const RecordingScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContent}>
-          <Text style={styles.permissionText}>📹</Text>
+          <Text style={styles.permissionText}>Camera</Text>
           <Text style={styles.permissionTitle}>Camera Access Required</Text>
           <Text style={styles.permissionSubtext}>
             Please enable camera access to record hand movements for robot training
@@ -109,7 +109,7 @@ const RecordingScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🤖 Hand Tracking Recording</Text>
+        <Text style={styles.headerTitle}>Hand Tracking Recording</Text>
         {isRecording && (
           <View style={styles.recordingInfo}>
             <View style={styles.recordingDot} />
@@ -129,10 +129,10 @@ const RecordingScreen: React.FC = () => {
           <View style={styles.overlay}>
             <View style={styles.trackingInfo}>
               <View style={styles.infoCard}>
-                <Text style={styles.infoText}>🫲 Left Hand: Detected</Text>
+                <Text style={styles.infoText}>Left Hand: Detected</Text>
               </View>
               <View style={styles.infoCard}>
-                <Text style={styles.infoText}>🫱 Right Hand: Detected</Text>
+                <Text style={styles.infoText}>Right Hand: Detected</Text>
               </View>
             </View>
           </View>
@@ -142,7 +142,7 @@ const RecordingScreen: React.FC = () => {
       <View style={styles.controls}>
         <View style={styles.controlsContent}>
           <TouchableOpacity style={styles.settingsButton}>
-            <Text style={styles.buttonText}>⚙️</Text>
+            <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -161,13 +161,13 @@ const RecordingScreen: React.FC = () => {
               style={styles.recordButtonGradient}
             >
               <Text style={styles.recordButtonText}>
-                {isRecording ? '⏹️' : '📹'}
+                {isRecording ? 'STOP' : 'REC'}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.galleryButton}>
-            <Text style={styles.buttonText}>📁</Text>
+            <Text style={styles.buttonText}>Gallery</Text>
           </TouchableOpacity>
         </View>
       </View>

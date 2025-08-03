@@ -12,7 +12,7 @@ const HomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>🤖 Humanoid Training Platform</Text>
+        <Text style={styles.title}>Humanoid Training Platform</Text>
         <Text style={styles.subtitle}>Transform your smartphone into a robot training powerhouse</Text>
       </View>
 
@@ -30,19 +30,19 @@ const HomeScreen: React.FC = () => {
 
         <View style={styles.actionsContainer}>
           <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>📹 Start Recording</Text>
+            <Text style={styles.actionButtonText}>Start Recording</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>🤖 Connect Robot</Text>
+            <Text style={styles.actionButtonText}>Connect Robot</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>🏪 Browse Marketplace</Text>
+            <Text style={styles.actionButtonText}>Browse Marketplace</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>🗺️ Map Environment</Text>
+            <Text style={styles.actionButtonText}>Map Environment</Text>
           </TouchableOpacity>
         </View>
       </View>

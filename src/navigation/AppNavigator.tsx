@@ -27,28 +27,28 @@ const AppNavigator: React.FC = () => {
           name="Home"
           component={HomeScreen}
           options={{
-            tabBarIcon: () => <View style={styles.tabIcon}><Text>🏠</Text></View>,
+            tabBarIcon: () => <View style={styles.tabIcon}><Text>Home</Text></View>,
           }}
         />
         <Tab.Screen
           name="Record"
           component={RecordingScreen}
           options={{
-            tabBarIcon: () => <View style={styles.tabIcon}><Text>📹</Text></View>,
+            tabBarIcon: () => <View style={styles.tabIcon}><Text>Record</Text></View>,
           }}
         />
         <Tab.Screen
           name="Marketplace"
           component={MarketplaceScreen}
           options={{
-            tabBarIcon: () => <View style={styles.tabIcon}><Text>🏪</Text></View>,
+            tabBarIcon: () => <View style={styles.tabIcon}><Text>Market</Text></View>,
           }}
         />
         <Tab.Screen
           name="Robot"
           component={RobotScreen}
           options={{
-            tabBarIcon: () => <View style={styles.tabIcon}><Text>🤖</Text></View>,
+            tabBarIcon: () => <View style={styles.tabIcon}><Text>Robot</Text></View>,
           }}
         />
       </Tab.Navigator>

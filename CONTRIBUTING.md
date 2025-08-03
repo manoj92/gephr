@@ -2,16 +2,16 @@
 
 Thank you for your interest in contributing to the Humanoid Training Platform! This project aims to democratize robot training by making it accessible to everyone with a smartphone. Every contribution helps build the future of robotics.
 
-## 🎯 How to Contribute
+## How to Contribute
 
 ### Ways to Contribute
-- 🐛 **Bug Reports**: Found a bug? Help us fix it!
-- ✨ **Feature Requests**: Have an idea? We'd love to hear it!
-- 💻 **Code Contributions**: Submit pull requests with improvements
-- 📖 **Documentation**: Help improve our docs and guides
-- 🤖 **Robot Integration**: Add support for new robot types
-- 🎨 **UI/UX**: Enhance the user experience
-- 🧪 **Testing**: Help us test on different devices and scenarios
+- **Bug Reports**: Found a bug? Help us fix it!
+- **Feature Requests**: Have an idea? We'd love to hear it!
+- **Code Contributions**: Submit pull requests with improvements
+- **Documentation**: Help improve our docs and guides
+- **Robot Integration**: Add support for new robot types
+- **UI/UX**: Enhance the user experience
+- **Testing**: Help us test on different devices and scenarios
 
 ### What We're Looking For
 - Mobile app improvements and new features
@@ -22,7 +22,7 @@ Thank you for your interest in contributing to the Humanoid Training Platform! T
 - Documentation improvements
 - Test coverage expansion
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Fork and Clone
 ```bash
@@ -55,7 +55,7 @@ git checkout -b feature/your-feature-name
 git checkout -b fix/issue-description
 ```
 
-## 📝 Development Guidelines
+## Development Guidelines
 
 ### Code Style
 - **TypeScript**: Use TypeScript for all new code
@@ -114,7 +114,7 @@ test: add unit tests for gesture recognition
 - Test with different camera qualities
 - Verify performance on older devices
 
-## 🤖 Robot Integration Guidelines
+## Robot Integration Guidelines
 
 ### Adding New Robot Support
 1. **Create Robot Configuration**
@@ -148,7 +148,7 @@ test: add unit tests for gesture recognition
 - Document hardware requirements
 - Include safety warnings
 
-## 🎨 UI/UX Guidelines
+## UI/UX Guidelines
 
 ### Design Principles
 - **Dark Theme First**: Design for our cyberpunk aesthetic
@@ -162,7 +162,7 @@ test: add unit tests for gesture recognition
 - Use spring animations for natural feel
 - Add haptic feedback where appropriate
 
-## 📱 Platform-Specific Guidelines
+## Platform-Specific Guidelines
 
 ### iOS Considerations
 - Test with various iPhone models
@@ -176,7 +176,7 @@ test: add unit tests for gesture recognition
 - Test with different screen densities
 - Verify performance on budget devices
 
-## 🧪 Testing
+## Testing
 
 ### Running Tests
 ```bash
@@ -199,7 +199,7 @@ npm run lint
 - Include edge cases
 - Mock external dependencies
 
-## 📖 Documentation
+## Documentation
 
 ### Documentation Standards
 - Clear, concise explanations
@@ -213,14 +213,14 @@ npm run lint
 - Provide usage examples
 - Note breaking changes
 
-## 🔄 Pull Request Process
+## Pull Request Process
 
 ### Before Submitting
-1. ✅ Test your changes thoroughly
-2. ✅ Update documentation
-3. ✅ Add/update tests
-4. ✅ Run linting and type checks
-5. ✅ Rebase on latest main branch
+1. Test your changes thoroughly
+2. Update documentation
+3. Add/update tests
+4. Run linting and type checks
+5. Rebase on latest main branch
 
 ### PR Template
 ```markdown
@@ -253,7 +253,7 @@ Brief description of changes
 3. **Testing**: Manual testing on various devices
 4. **Merge**: Approved PRs are merged to main
 
-## 🏷️ Issue Guidelines
+## Issue Guidelines
 
 ### Bug Reports
 Use the bug report template:
@@ -270,7 +270,7 @@ Use the feature request template:
 - Alternative solutions considered
 - Additional context
 
-## 🌟 Recognition
+## Recognition
 
 ### Contributors
 - All contributors are listed in our README
@@ -283,12 +283,12 @@ Use the feature request template:
 - Speaking opportunities at events
 - Early access to new features
 
-## 🆘 Getting Help
+## Getting Help
 
 ### Communication Channels
-- 💬 [Discord Server](https://discord.gg/humanoid-training) - Real-time chat
-- 🐛 [GitHub Issues](https://github.com/yourusername/humanoid-training-platform/issues) - Bug reports and features
-- 📧 Email: contributors@humanoidtraining.dev - Direct contact
+- [Discord Server](https://discord.gg/humanoid-training) - Real-time chat
+- [GitHub Issues](https://github.com/yourusername/humanoid-training-platform/issues) - Bug reports and features
+- Email: contributors@humanoidtraining.dev - Direct contact
 
 ### Mentorship Program
 New to open source? We offer mentorship!
@@ -297,7 +297,7 @@ New to open source? We offer mentorship!
 - Career development advice
 - Open source best practices
 
-## 📋 Development Setup Details
+## Development Setup Details
 
 ### Required Tools
 - Node.js 18+
@@ -326,7 +326,7 @@ EXPO_PUBLIC_API_URL=http://localhost:3000
 EXPO_PUBLIC_ENABLE_DEV_TOOLS=true
 ```
 
-## 🚦 Release Process
+## Release Process
 
 ### Version Numbering
 We follow [Semantic Versioning](https://semver.org/):
@@ -341,7 +341,7 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ---
 
-## 🙏 Thank You
+## Thank You
 
 Your contributions make this project possible! Whether you're fixing bugs, adding features, or improving documentation, you're helping build the future of robotics. Together, we're making robot training accessible to everyone.
 

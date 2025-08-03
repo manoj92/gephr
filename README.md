@@ -1,4 +1,4 @@
-# 🤖 Humanoid Training Platform
+# Humanoid Training Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![React Native](https://img.shields.io/badge/React%20Native-0.72-blue.svg)](https://reactnative.dev/)
@@ -7,16 +7,16 @@
 
 > Transform your smartphone into a powerful robot training platform. Capture hand movements, generate LeRobot-compatible datasets, and earn income through our skills marketplace.
 
-## ✨ Features
+## Features
 
-- 📱 **Universal Mobile App** - React Native with beautiful dark UI
-- 🤖 **Hand Tracking** - Real-time computer vision for gesture capture
-- 🔗 **Robot Control** - Direct connection to Unitree G1, Boston Dynamics, and more
-- 💰 **Skills Marketplace** - Buy and sell robot behaviors
-- 🗺️ **3D Mapping** - Environment scanning with LIDAR support
-- 📊 **LeRobot Compatible** - Generate training data for Gr00t N1 VLA
+- **Universal Mobile App** - React Native with beautiful dark UI
+- **Hand Tracking** - Real-time computer vision for gesture capture
+- **Robot Control** - Direct connection to Unitree G1, Boston Dynamics, and more
+- **Skills Marketplace** - Buy and sell robot behaviors
+- **3D Mapping** - Environment scanning with LIDAR support
+- **LeRobot Compatible** - Generate training data for Gr00t N1 VLA
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
@@ -42,7 +42,7 @@ npx expo start
 2. Grant camera permissions
 3. Start recording hand movements!
 
-## 📱 Screenshots
+## Screenshots
 
 <p align="center">
   <img src="docs/images/home-screen.png" width="200" alt="Home Screen" />
@@ -51,7 +51,7 @@ npx expo start
   <img src="docs/images/robot-screen.png" width="200" alt="Robot Control Screen" />
 </p>
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 src/
@@ -67,16 +67,16 @@ src/
 └── utils/             # Helper functions
 ```
 
-## 🤖 Supported Robots
+## Supported Robots
 
 | Robot | Status | Capabilities |
 |-------|--------|-------------|
-| Unitree G1 | ✅ Full Support | Navigation, Manipulation, Vision |
-| Boston Dynamics Spot | ✅ Supported | Navigation, Vision |
-| Tesla Optimus | 🚧 In Progress | Vision, Fine Motor |
-| Custom Robots | ✅ Via ROS/ROS2 | Configurable |
+| Unitree G1 | Full Support | Navigation, Manipulation, Vision |
+| Boston Dynamics Spot | Supported | Navigation, Vision |
+| Tesla Optimus | In Progress | Vision, Fine Motor |
+| Custom Robots | Via ROS/ROS2 | Configurable |
 
-## 💡 How It Works
+## How It Works
 
 1. **Record** - Keep phone in shirt pocket, perform tasks
 2. **Process** - AI analyzes hand movements and environment
@@ -85,7 +85,7 @@ src/
 5. **Deploy** - Execute trained behaviors on real robots
 6. **Earn** - Sell successful skills in marketplace
 
-## 🧪 LeRobot Integration
+## LeRobot Integration
 
 ```python
 # Example: Loading data in LeRobot
@@ -98,7 +98,7 @@ for episode in dataset:
     # Train your model...
 ```
 
-## 🛠️ Development
+## Development
 
 ### Running Tests
 ```bash
@@ -123,45 +123,45 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📊 Performance
+## Performance
 
 - **Hand Tracking**: 95%+ accuracy, <50ms latency
 - **Battery Life**: 4+ hours continuous recording
 - **Data Rate**: ~1GB per hour of training data
 - **Compression**: 80% size reduction with quality preservation
 
-## 🔒 Privacy & Security
+## Privacy & Security
 
-- ✅ Local hand tracking processing
-- ✅ Encrypted data storage
-- ✅ Anonymous contribution options
-- ✅ GDPR compliant
-- ✅ Open source transparency
+- Local hand tracking processing
+- Encrypted data storage
+- Anonymous contribution options
+- GDPR compliant
+- Open source transparency
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Community
+## Community
 
-- 💬 [Discord Server](https://discord.gg/humanoid-training)
-- 🐛 [Report Issues](https://github.com/yourusername/humanoid-training-platform/issues)
-- 📧 Email: hello@humanoidtraining.dev
+- [Discord Server](https://discord.gg/humanoid-training)
+- [Report Issues](https://github.com/yourusername/humanoid-training-platform/issues)
+- Email: hello@humanoidtraining.dev
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [LeRobot](https://github.com/huggingface/lerobot) - Robotics framework
 - [MediaPipe](https://mediapipe.dev/) - Hand tracking technology
 - [Expo](https://expo.dev/) - Mobile development platform
 - [React Native](https://reactnative.dev/) - Cross-platform framework
 
-## ⭐ Star History
+## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=yourusername/humanoid-training-platform&type=Date)](https://star-history.com/#yourusername/humanoid-training-platform&Date)
 
 ---
 
 <p align="center">
-  <strong>🚀 The future of robotics is in your pocket</strong><br>
+  <strong>The future of robotics is in your pocket</strong><br>
   <em>Join thousands of contributors building the next generation of humanoid robots</em>
 </p> 

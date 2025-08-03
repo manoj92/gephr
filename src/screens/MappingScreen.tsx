@@ -98,7 +98,7 @@ const MappingScreen: React.FC = () => {
     setTimeout(() => {
       setIsScanning(false);
       Alert.alert(
-        'Mapping Complete! 🗺️',
+        'Mapping Complete!',
         'Successfully mapped 2 rooms with 5 objects detected.',
         [{ text: 'OK', onPress: () => console.log('Mapping completed') }]
       );
@@ -154,7 +154,7 @@ const MappingScreen: React.FC = () => {
             </Text>
           </View>
           <Text style={styles.expandIcon}>
-            {selectedRoom?.id === room.id ? '🔽' : '▶️'}
+            {selectedRoom?.id === room.id ? 'v' : '>'}
           </Text>
         </View>
 
@@ -177,7 +177,7 @@ const MappingScreen: React.FC = () => {
                     </Text>
                   </View>
                 </View>
-                <Text style={styles.editIcon}>✏️</Text>
+                <Text style={styles.editIcon}>Edit</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -188,40 +188,40 @@ const MappingScreen: React.FC = () => {
 
   const getRoomIcon = (type: string) => {
     switch (type) {
-      case 'kitchen': return '🍳';
-      case 'bedroom': return '🛏️';
-      case 'living_room': return '🛋️';
-      case 'bathroom': return '🚿';
-      case 'office': return '💼';
-      case 'factory_floor': return '🏭';
-      case 'warehouse': return '📦';
-      default: return '🏠';
+      case 'kitchen': return 'Kitchen';
+      case 'bedroom': return 'Bedroom';
+      case 'living_room': return 'Living';
+      case 'bathroom': return 'Bath';
+      case 'office': return 'Office';
+      case 'factory_floor': return 'Factory';
+      case 'warehouse': return 'Warehouse';
+      default: return 'Home';
     }
   };
 
   const getObjectIcon = (type: string) => {
     switch (type) {
-      case 'furniture': return '🪑';
-      case 'appliance': return '🔌';
-      case 'tool': return '🔧';
-      case 'container': return '📦';
-      case 'workstation': return '🖥️';
-      case 'obstacle': return '⚠️';
-      default: return '📍';
+      case 'furniture': return 'Chair';
+      case 'appliance': return 'Appliance';
+      case 'tool': return 'Tool';
+      case 'container': return 'Box';
+      case 'workstation': return 'Computer';
+      case 'obstacle': return 'Warning';
+      default: return 'Pin';
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🗺️ Environment Mapping</Text>
+        <Text style={styles.headerTitle}>Environment Mapping</Text>
         <TouchableOpacity 
           style={styles.scanButton}
           onPress={startMapping}
           disabled={isScanning}
         >
           <Text style={styles.scanButtonText}>
-            {isScanning ? '🔄 Scanning...' : '📡 Scan'}
+            {isScanning ? 'Scanning...' : 'Scan'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -257,7 +257,7 @@ const MappingScreen: React.FC = () => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>🏠 Mapped Rooms</Text>
+            <Text style={styles.sectionTitle}>Mapped Rooms</Text>
             <TouchableOpacity style={styles.addButton} onPress={addNewRoom}>
               <Text style={styles.addButtonText}>+ Add Room</Text>
             </TouchableOpacity>
@@ -269,7 +269,7 @@ const MappingScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🤖 Robot Training Tips</Text>
+          <Text style={styles.sectionTitle}>Robot Training Tips</Text>
           <View style={styles.tipCard}>
             <Text style={styles.tipText}>
               • Map multiple angles of each room for better robot navigation

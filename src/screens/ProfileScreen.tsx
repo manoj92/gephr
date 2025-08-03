@@ -58,7 +58,7 @@ const MOCK_USER: UserProfile = {
       id: 'ach1',
       title: 'First Steps',
       description: 'Complete your first recording session',
-      icon: '👶',
+      icon: 'Baby',
       unlockedAt: new Date('2024-01-15'),
       rarity: 'common',
     },
@@ -66,7 +66,7 @@ const MOCK_USER: UserProfile = {
       id: 'ach2',
       title: 'Data Contributor',
       description: 'Upload 1GB of training data',
-      icon: '💾',
+      icon: 'Disk',
       unlockedAt: new Date('2024-02-20'),
       rarity: 'rare',
     },
@@ -74,7 +74,7 @@ const MOCK_USER: UserProfile = {
       id: 'ach3',
       title: 'Robot Whisperer',
       description: 'Successfully connect to 5 different robots',
-      icon: '🤖',
+      icon: 'Robot',
       unlockedAt: new Date('2024-03-01'),
       rarity: 'epic',
     },
@@ -174,7 +174,7 @@ const ProfileScreen: React.FC = () => {
             style={styles.profileGradient}
           >
             <View style={styles.avatarContainer}>
-              <Text style={styles.avatar}>🤖</Text>
+              <Text style={styles.avatar}>R</Text>
               <View style={styles.levelBadge}>
                 <Text style={styles.levelText}>Lv.{user.level}</Text>
               </View>
@@ -193,14 +193,14 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
-              <Text style={styles.editButtonText}>✏️ Edit Profile</Text>
+              <Text style={styles.editButtonText}>Edit Profile</Text>
             </TouchableOpacity>
           </LinearGradient>
         </View>
 
         {/* Stats Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📊 Your Stats</Text>
+          <Text style={styles.sectionTitle}>Your Stats</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>${user.totalCredits.toFixed(2)}</Text>
@@ -235,9 +235,9 @@ const ProfileScreen: React.FC = () => {
             style={styles.sectionHeader}
             onPress={() => setShowAchievements(!showAchievements)}
           >
-            <Text style={styles.sectionTitle}>🏆 Achievements</Text>
+            <Text style={styles.sectionTitle}>Achievements</Text>
             <Text style={styles.expandIcon}>
-              {showAchievements ? '🔽' : '▶️'}
+              {showAchievements ? 'v' : '>'}
             </Text>
           </TouchableOpacity>
           
@@ -265,7 +265,7 @@ const ProfileScreen: React.FC = () => {
 
         {/* Preferences Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚙️ Preferences</Text>
+          <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.preferencesList}>
             <View style={styles.preferenceItem}>
               <View>
@@ -319,7 +319,7 @@ const ProfileScreen: React.FC = () => {
                   Current: {user.preferences.dataQuality.toUpperCase()}
                 </Text>
               </View>
-              <Text style={styles.preferenceArrow}>▶️</Text>
+              <Text style={styles.preferenceArrow}>></Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.preferenceItem}>
@@ -329,36 +329,36 @@ const ProfileScreen: React.FC = () => {
                   {user.preferences.preferredRobotType.replace('_', ' ').toUpperCase()}
                 </Text>
               </View>
-              <Text style={styles.preferenceArrow}>▶️</Text>
+              <Text style={styles.preferenceArrow}>></Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Actions Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔧 Actions</Text>
+          <Text style={styles.sectionTitle}>Actions</Text>
           <View style={styles.actionsList}>
             <TouchableOpacity style={styles.actionButton} onPress={handleExportData}>
-              <Text style={styles.actionText}>📤 Export Training Data</Text>
+              <Text style={styles.actionText}>Export Training Data</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionText}>📋 Privacy Policy</Text>
+              <Text style={styles.actionText}>Privacy Policy</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionText}>📞 Contact Support</Text>
+              <Text style={styles.actionText}>Contact Support</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionText}>ℹ️ About App</Text>
+              <Text style={styles.actionText}>About App</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={[styles.actionButton, styles.dangerButton]} 
               onPress={handleDeleteAccount}
             >
-              <Text style={[styles.actionText, styles.dangerText]}>🗑️ Delete Account</Text>
+              <Text style={[styles.actionText, styles.dangerText]}>Delete Account</Text>
             </TouchableOpacity>
           </View>
         </View>

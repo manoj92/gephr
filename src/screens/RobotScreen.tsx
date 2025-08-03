@@ -113,10 +113,10 @@ const RobotScreen: React.FC = () => {
 
   const getRobotEmoji = (type: string) => {
     switch (type) {
-      case 'unitree_g1': return '🦾';
-      case 'boston_dynamics': return '🦿';
-      case 'tesla_bot': return '🤖';
-      default: return '⚙️';
+      case 'unitree_g1': return 'Robot Arm';
+      case 'boston_dynamics': return 'Robot Leg';
+      case 'tesla_bot': return 'Robot';
+      default: return 'Gear';
     }
   };
 
@@ -205,14 +205,14 @@ const RobotScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🤖 Robot Control</Text>
+        <Text style={styles.headerTitle}>Robot Control</Text>
         <TouchableOpacity 
           style={styles.scanButton}
           onPress={handleScanForRobots}
           disabled={isScanning}
         >
           <Text style={styles.scanButtonText}>
-            {isScanning ? '🔄 Scanning...' : '🔍 Scan'}
+            {isScanning ? 'Scanning...' : 'Scan'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -221,7 +221,7 @@ const RobotScreen: React.FC = () => {
         {/* Connected Robot Status */}
         {connectedRobot && (
           <View style={styles.connectedSection}>
-            <Text style={styles.sectionTitle}>🟢 Connected Robot</Text>
+            <Text style={styles.sectionTitle}>Connected Robot</Text>
             <View style={styles.connectedRobotCard}>
               <LinearGradient
                 colors={[COLORS.success + '20', COLORS.success + '10']}
@@ -237,55 +237,55 @@ const RobotScreen: React.FC = () => {
         {/* Quick Commands */}
         {connectedRobot && (
           <View style={styles.commandsSection}>
-            <Text style={styles.sectionTitle}>⚡ Quick Commands</Text>
+            <Text style={styles.sectionTitle}>Quick Commands</Text>
             <View style={styles.commandsGrid}>
               <TouchableOpacity 
                 style={styles.commandButton}
                 onPress={() => executeCommand('Move Forward')}
               >
-                <Text style={styles.commandText}>🔼 Forward</Text>
+                <Text style={styles.commandText}>Forward</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.commandButton}
                 onPress={() => executeCommand('Move Backward')}
               >
-                <Text style={styles.commandText}>🔽 Backward</Text>
+                <Text style={styles.commandText}>Backward</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.commandButton}
                 onPress={() => executeCommand('Turn Left')}
               >
-                <Text style={styles.commandText}>◀️ Left</Text>
+                <Text style={styles.commandText}>Left</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.commandButton}
                 onPress={() => executeCommand('Turn Right')}
               >
-                <Text style={styles.commandText}>▶️ Right</Text>
+                <Text style={styles.commandText}>Right</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.commandButton}
                 onPress={() => executeCommand('Pick Object')}
               >
-                <Text style={styles.commandText}>🫴 Pick</Text>
+                <Text style={styles.commandText}>Pick</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.commandButton}
                 onPress={() => executeCommand('Place Object')}
               >
-                <Text style={styles.commandText}>🫳 Place</Text>
+                <Text style={styles.commandText}>Place</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.commandButton}
                 onPress={() => executeCommand('Emergency Stop')}
               >
-                <Text style={styles.commandText}>🛑 STOP</Text>
+                <Text style={styles.commandText}>STOP</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.commandButton}
                 onPress={() => executeCommand('Return Home')}
               >
-                <Text style={styles.commandText}>🏠 Home</Text>
+                <Text style={styles.commandText}>Home</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -293,7 +293,7 @@ const RobotScreen: React.FC = () => {
 
         {/* Available Robots */}
         <View style={styles.robotsSection}>
-          <Text style={styles.sectionTitle}>📡 Available Robots</Text>
+          <Text style={styles.sectionTitle}>Available Robots</Text>
           {robots.map((robot) => (
             <RobotCard key={robot.id} robot={robot} />
           ))}
