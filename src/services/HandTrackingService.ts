@@ -1,4 +1,6 @@
 import { CameraFrame, HandPose, HandKeypoint, GestureData, LerobotDataPoint, LerobotAction, LerobotObservation } from '../types';
+import { Hands, Results } from '@mediapipe/hands';
+import { Camera } from '@mediapipe/camera_utils';
 
 export class HandTrackingService {
   private isTracking = false;
@@ -6,6 +8,8 @@ export class HandTrackingService {
   private handPoses: HandPose[] = [];
   private frameBuffer: CameraFrame[] = [];
   private maxFrameBuffer = 300; // 10 seconds at 30fps
+  private hands: Hands | null = null;
+  private camera: Camera | null = null;
   
   // Hand landmarks indices based on MediaPipe hand model
   private readonly HAND_LANDMARKS = {
@@ -34,9 +38,58 @@ export class HandTrackingService {
     this.initializeTracking();
   }
 
-  private initializeTracking(): void {
-    // Initialize MediaPipe hands or alternative hand tracking library
-    console.log('Initializing hand tracking service...');
+  private async initializeTracking(): Promise<void> {
+    try {
+      this.hands = new Hands({
+        locateFile: (file: string) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }
+      });
+
+      this.hands.setOptions({
+        maxNumHands: 2,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+
+      this.hands.onResults(this.onResults.bind(this));
+      console.log('MediaPipe hands initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize MediaPipe hands:', error);
+      // Fallback to mock mode
+    }
+  }
+
+  private onResults(results: Results): void {
+    if (!this.isTracking) return;
+
+    const timestamp = Date.now();
+    const handPoses: HandPose[] = [];
+
+    if (results.multiHandLandmarks && results.multiHandedness) {
+      for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+        const landmarks = results.multiHandLandmarks[i];
+        const handedness = results.multiHandedness[i];
+        
+        const handKeypoints: HandKeypoint[] = landmarks.map((landmark: any) => ({
+          x: landmark.x,
+          y: landmark.y,
+          z: landmark.z || 0,
+          confidence: 0.9 // MediaPipe doesn't provide per-landmark confidence
+        }));
+
+        handPoses.push({
+          landmarks: handKeypoints,
+          handedness: handedness.label === 'Left' ? 'left' : 'right',
+          confidence: handedness.score,
+          timestamp
+        });
+      }
+    }
+
+    this.handPoses.push(...handPoses);
+    this.trimHandPosesBuffer();
   }
 
   public startTracking(): void {

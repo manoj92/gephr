@@ -144,22 +144,95 @@ export class RobotService {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // In a real implementation, this would:
-    // 1. Establish TCP/UDP connection
-    // 2. Perform authentication
-    // 3. Exchange capability information
-    // 4. Initialize robot state monitoring
+    // 1. Establish TCP/UDP connection via WebSocket or HTTP
+    // 2. Perform authentication with API keys or certificates
+    // 3. Exchange capability information and robot specs
+    // 4. Initialize robot state monitoring with heartbeat
 
     const robotConfig = this.ROBOT_CONFIGS[robot.type];
     
     // Verify robot capabilities
     robot.capabilities = robotConfig.capabilities;
     
-    // Mock authentication success
-    if (Math.random() > 0.1) { // 90% success rate
-      return Promise.resolve();
-    } else {
-      throw new Error('Authentication failed');
+    // Mock connection establishment
+    try {
+      // Simulate network handshake
+      await this.establishNetworkConnection(robot, config);
+      
+      // Simulate authentication
+      await this.authenticateRobot(robot, config);
+      
+      // Initialize robot monitoring
+      await this.initializeRobotMonitoring(robot);
+      
+    } catch (error) {
+      throw new Error(`Connection failed: ${error}`);
     }
+  }
+
+  private async establishNetworkConnection(
+    robot: RobotConnection,
+    config?: Partial<RobotConnectionConfig>
+  ): Promise<void> {
+    // Mock network connection logic
+    const connectionMethod = config?.connectionMethod || 'wifi';
+    const address = config?.address || robot.ipAddress;
+    
+    console.log(`Establishing ${connectionMethod} connection to ${address}`);
+    
+    // Simulate connection attempt
+    if (Math.random() > 0.05) { // 95% success rate
+      console.log('Network connection established');
+    } else {
+      throw new Error('Network connection failed');
+    }
+  }
+
+  private async authenticateRobot(
+    robot: RobotConnection,
+    config?: Partial<RobotConnectionConfig>
+  ): Promise<void> {
+    // Mock authentication logic
+    if (config?.authentication) {
+      console.log('Authenticating with provided credentials');
+      
+      // Simulate authentication verification
+      if (Math.random() > 0.02) { // 98% success rate with credentials
+        console.log('Authentication successful');
+      } else {
+        throw new Error('Authentication failed - invalid credentials');
+      }
+    } else {
+      // Try default authentication for robot type
+      console.log('Using default authentication for robot type');
+      
+      if (Math.random() > 0.1) { // 90% success rate for default auth
+        console.log('Default authentication successful');
+      } else {
+        throw new Error('Authentication required - please provide credentials');
+      }
+    }
+  }
+
+  private async initializeRobotMonitoring(robot: RobotConnection): Promise<void> {
+    // Initialize robot state monitoring
+    console.log('Initializing robot state monitoring');
+    
+    // Set initial robot state
+    const initialState = await this.getRobotInitialState(robot);
+    robot.batteryLevel = initialState.battery_level;
+    
+    console.log('Robot monitoring initialized');
+  }
+
+  private async getRobotInitialState(robot: RobotConnection): Promise<any> {
+    // Mock initial robot state
+    return {
+      battery_level: 75 + Math.random() * 25, // 75-100%
+      joint_positions: Array(this.ROBOT_CONFIGS[robot.type].jointCount).fill(0),
+      is_connected: true,
+      status: 'ready'
+    };
   }
 
   /**

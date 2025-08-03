@@ -117,3 +117,8 @@ The project includes a store directory suggesting Redux or similar state managem
 - AES-256 encryption for data storage
 - GDPR compliance features
 - Anonymous contribution options available
+
+## Code Style Guidelines
+- NEVER add emoticons, emojis, or Unicode symbols to any code, UI components, text content, or files
+- Keep all text plain and professional
+- Use descriptive variable and function names without special characters
