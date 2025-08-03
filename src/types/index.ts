@@ -13,6 +13,20 @@ export interface HandPose {
   timestamp: number;
 }
 
+export interface GestureData {
+  id: string;
+  type: 'pick' | 'place' | 'move' | 'grasp' | 'release';
+  confidence: number;
+  timestamp: number;
+  startTime: number;
+  endTime?: number;
+  duration?: number;
+  handPoses: HandPose[];
+  poses: HandPose[];
+  environment?: any;
+  taskType?: string;
+}
+
 // LeRobot compatible data structures
 export interface LerobotAction {
   joint_positions?: number[];
@@ -74,3 +88,37 @@ export type RobotCapability =
   | 'climbing'
   | 'lifting'
   | 'fine_motor';
+
+export interface RobotCommand {
+  id: string;
+  type: 'move' | 'pick' | 'place' | 'rotate' | 'stop' | 'navigate' | 'custom' | 'grasp_object';
+  parameters: {
+    position?: { x: number; y: number; z: number };
+    rotation?: { x: number; y: number; z: number; w: number };
+    velocity?: number;
+    force?: number;
+    target?: string;
+    action_type?: string;
+    immediate?: boolean;
+    joint_positions?: number[];
+    custom_data?: any;
+  };
+  priority: 'low' | 'medium' | 'high' | 'emergency' | 'critical';
+  timestamp: number;
+  timeout?: number;
+  estimatedDuration?: number;
+}
+
+export interface RobotState {
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number; w: number };
+  joint_positions: number[];
+  jointPositions?: number[]; // Alternative naming for compatibility
+  joint_velocities: number[];
+  battery_level: number;
+  error_state: boolean;
+  current_task?: string;
+  connection_quality: number;
+  timestamp: number;
+  gripperState?: 'open' | 'grasping' | 'closed';
+}

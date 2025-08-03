@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+import { Camera, CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../constants/theme';
 
@@ -15,14 +15,19 @@ const RecordingScreen: React.FC = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const cameraRef = useRef<Camera>(null);
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef<CameraView>(null);
 
   useEffect(() => {
     (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
+      if (permission) {
+        setHasPermission(permission.granted);
+      } else {
+        const { status } = await Camera.requestCameraPermissionsAsync();
+        setHasPermission(status === 'granted');
+      }
     })();
-  }, []);
+  }, [permission]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -90,6 +95,12 @@ const RecordingScreen: React.FC = () => {
           <Text style={styles.permissionSubtext}>
             Please enable camera access to record hand movements for robot training
           </Text>
+          <TouchableOpacity 
+            style={styles.permissionButton}
+            onPress={requestPermission}
+          >
+            <Text style={styles.permissionButtonText}>Grant Permission</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -110,11 +121,10 @@ const RecordingScreen: React.FC = () => {
       </View>
 
       <View style={styles.cameraContainer}>
-        <Camera
+        <CameraView
           ref={cameraRef}
           style={styles.camera}
-          type={CameraType.back}
-          ratio="16:9"
+          facing="back"
         >
           <View style={styles.overlay}>
             <View style={styles.trackingInfo}>
@@ -126,7 +136,7 @@ const RecordingScreen: React.FC = () => {
               </View>
             </View>
           </View>
-        </Camera>
+        </CameraView>
       </View>
 
       <View style={styles.controls}>
@@ -196,6 +206,18 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
+    marginBottom: SPACING.xl,
+  },
+  permissionButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  permissionButtonText: {
+    color: COLORS.text,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: '600',
   },
   header: {
     padding: SPACING.lg,

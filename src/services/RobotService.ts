@@ -213,7 +213,7 @@ export class RobotService {
         gripper_position: action.gripper_position,
         confidence: action.confidence,
       },
-      priority: action.confidence > 0.8 ? 'high' : 'normal',
+      priority: action.confidence > 0.8 ? 'high' : 'medium',
       timestamp: Date.now(),
       estimatedDuration: this.estimateCommandDuration(action),
     };
@@ -311,7 +311,7 @@ export class RobotService {
     // Mock robot state updates based on command progress
     const mockState: RobotState = {
       jointPositions: Array(this.ROBOT_CONFIGS[this.activeConnection.type].jointCount).fill(0).map(() => Math.random() * 2 - 1),
-      jointVelocities: Array(this.ROBOT_CONFIGS[this.activeConnection.type].jointCount).fill(0).map(() => Math.random() * 0.1),
+      joint_velocities: Array(this.ROBOT_CONFIGS[this.activeConnection.type].jointCount).fill(0).map(() => Math.random() * 0.1),
       endEffectorPosition: { x: Math.random(), y: Math.random(), z: Math.random() },
       endEffectorOrientation: { x: 0, y: 0, z: 0, w: 1 },
       gripperState: command.type === 'grasp_object' ? 'grasping' : 'open',
