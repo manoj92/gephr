@@ -74,24 +74,3 @@ export type RobotCapability =
   | 'climbing'
   | 'lifting'
   | 'fine_motor';
-
-export interface RobotCommand {
-  id: string;
-  type: 'move' | 'pick' | 'place' | 'navigate' | 'stop' | 'custom';
-  parameters: Record<string, any>;
-  priority: 'low' | 'normal' | 'high' | 'critical';
-  timestamp: number;
-  estimatedDuration?: number;
-}
-
-export interface RobotState {
-  jointPositions: number[];
-  jointVelocities: number[];
-  endEffectorPosition: { x: number; y: number; z: number };
-  endEffectorOrientation: { x: number; y: number; z: number; w: number };
-  gripperState: 'open' | 'closed' | 'grasping';
-  isMoving: boolean;
-  currentTask?: string;
-  error?: string;
-  timestamp: number;
-} 

@@ -1,0 +1,46 @@
+{
+  "name": "humanoidtrainingplatform",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^14.1.0",
+    "@react-navigation/bottom-tabs": "^7.4.5",
+    "@react-navigation/native": "^7.1.17",
+    "@react-navigation/stack": "^7.4.5",
+    "expo": "~53.0.20",
+    "expo-av": "^15.1.7",
+    "expo-barcode-scanner": "^13.0.1",
+    "expo-camera": "^16.1.11",
+    "expo-file-system": "^18.1.11",
+    "expo-gl": "^15.1.7",
+    "expo-gl-cpp": "^11.4.0",
+    "expo-linear-gradient": "^14.1.5",
+    "expo-location": "^18.1.6",
+    "expo-media-library": "^17.1.7",
+    "expo-sensors": "^14.1.4",
+    "expo-sharing": "^13.1.5",
+    "expo-status-bar": "~2.2.3",
+    "lottie-react-native": "^7.2.5",
+    "react": "19.0.0",
+    "react-native": "0.79.5",
+    "react-native-ble-plx": "^3.5.0",
+    "react-native-gesture-handler": "^2.27.2",
+    "react-native-reanimated": "^4.0.1",
+    "react-native-safe-area-context": "^5.5.2",
+    "react-native-screens": "^4.13.1",
+    "react-native-super-grid": "^6.0.1",
+    "three": "^0.179.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~19.0.10",
+    "typescript": "~5.8.3"
+  },
+  "private": true
+}
