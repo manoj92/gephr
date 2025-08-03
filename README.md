@@ -1,4 +1,4 @@
-# Humanoid Training Platform
+# Gephr Humanoid Training Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![React Native](https://img.shields.io/badge/React%20Native-0.72-blue.svg)](https://reactnative.dev/)
@@ -142,8 +142,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Community
 
-- [Report Issues](https://github.com/yourusername/humanoid-training-platform/issues)
-- Email: hello@humanoidtraining.dev
+- [Report Issues](https://github.com/manoj92/humanoid-training-platform/issues)
+- Email: info@gephr.com
 
 ## Acknowledgments
 
@@ -160,5 +160,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <p align="center">
   <strong>The future of robotics is in your pocket</strong><br>
-  <em>Join thousands of contributors building the next generation of humanoid robots</em>
+  <em>Contribute to the building of the next generation of humanoid robots</em>
 </p> 
