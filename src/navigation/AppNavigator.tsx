@@ -8,6 +8,8 @@ import HomeScreen from '../screens/HomeScreen';
 import RecordingScreen from '../screens/RecordingScreen';
 import MarketplaceScreen from '../screens/MarketplaceScreen';
 import RobotScreen from '../screens/RobotScreen';
+import MappingScreen from '../screens/MappingScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -49,6 +51,20 @@ const AppNavigator: React.FC = () => {
           component={RobotScreen}
           options={{
             tabBarIcon: () => <View style={styles.tabIcon}><Text>Robot</Text></View>,
+          }}
+        />
+        <Tab.Screen
+          name="Map"
+          component={MappingScreen}
+          options={{
+            tabBarIcon: () => <View style={styles.tabIcon}><Text>Map</Text></View>,
+          }}
+        />
+        <Tab.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{
+            tabBarIcon: () => <View style={styles.tabIcon}><Text>Profile</Text></View>,
           }}
         />
       </Tab.Navigator>

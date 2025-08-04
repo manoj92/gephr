@@ -13,9 +13,20 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/humanoid_training"
     
     # Security
-    SECRET_KEY: str = "your-secret-key-change-in-production"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
     ALGORITHM: str = "HS256"
+    
+    # Additional Security Settings
+    BCRYPT_ROUNDS: int = int(os.getenv("BCRYPT_ROUNDS", "12"))
+    MAX_LOGIN_ATTEMPTS: int = int(os.getenv("MAX_LOGIN_ATTEMPTS", "5"))
+    LOCKOUT_DURATION: int = int(os.getenv("LOCKOUT_DURATION", "900"))  # 15 minutes
+    
+    def __post_init__(self):
+        if not self.SECRET_KEY or self.SECRET_KEY == "your-secret-key-change-in-production":
+            import secrets
+            self.SECRET_KEY = secrets.token_urlsafe(32)
+            print(f"WARNING: Using generated SECRET_KEY. Set SECRET_KEY environment variable in production.")
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [

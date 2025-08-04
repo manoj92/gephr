@@ -152,4 +152,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <p align="center">
   <strong>The future of robotics is in your pocket</strong><br>
   <em>Contribute to the building of the next generation of humanoid robots</em>
-</p>
+</p></p>
