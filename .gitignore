@@ -52,3 +52,17 @@ dist/
 # Temporary folders
 tmp/
 temp/ 
+.vercel
+
+# Python virtual environments
+backend/venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Database files
+*.db
+*.sqlite3
