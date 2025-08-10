@@ -1,0 +1,79 @@
+# React Native project 
+HumanoidTrainingPlatform/
+
+# Node modules
+node_modules/
+*/node_modules/
+
+# Python virtual environments  
+backend/venv/
+venv/
+*/venv/
+
+# Build artifacts
+build/
+dist/
+*.log
+
+# Database files
+*.db
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+.nyc_output
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Large binaries and media files
+*.dylib
+*.so
+*.a
+*.lib
+*.dll
+*.exe
+*.app
+*.dmg
+*.pkg
+*.deb
+*.rpm
+
+# Documentation (not needed for deployment)
+docs/
+*.md
+!README.md
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD files
+.github/
+.circleci/
+.travis.yml
+.gitlab-ci.yml
+
+# Package lock files (dependencies resolved server-side)
+package-lock.json
+yarn.lock
+poetry.lock
