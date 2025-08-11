@@ -1,0 +1,61 @@
+# Ignore files and directories for EAS Build
+
+# Node modules and build artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+build/
+dist/
+web-build/
+coverage/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Logs
+*.log
+logs/
+
+# Test files
+__tests__/
+*.test.*
+*.spec.*
+
+# Documentation and media
+*.md
+screenshots/
+docs/
+assets/screenshots/
+
+# Git
+.git/
+.gitignore
+
+# Environment files (keep only the ones needed)
+.env.local
+.env.development
+.env.test
+
+# Other build tools
+.expo/
