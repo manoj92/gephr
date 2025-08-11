@@ -1,0 +1,207 @@
+name: Gephr Labs CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '18.x'
+  EXPO_CLI_VERSION: 'latest'
+
+jobs:
+  test:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm run test:ci
+
+      - name: Upload test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level high
+
+      - name: Run Snyk security check
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  build-preview:
+    name: Build Preview
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup EAS CLI
+        run: npm install -g @expo/eas-cli@${{ env.EXPO_CLI_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build preview
+        run: eas build --platform all --profile preview --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  build-staging:
+    name: Build Staging
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup EAS CLI
+        run: npm install -g @expo/eas-cli@${{ env.EXPO_CLI_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build staging
+        run: eas build --platform all --profile staging --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  build-production:
+    name: Build Production
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup EAS CLI
+        run: npm install -g @expo/eas-cli@${{ env.EXPO_CLI_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production
+        run: eas build --platform all --profile production --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit to App Stores (Manual)
+        if: github.event_name == 'workflow_dispatch'
+        run: eas submit --platform all --profile production
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Gephr Labs v${{ github.run_number }}
+          body: |
+            ## 🚀 New Release: Gephr Labs Humanoid Training Platform
+            
+            ### 📱 What's New
+            - Automated production build from commit ${{ github.sha }}
+            - All tests passed ✅
+            - Security audit completed ✅
+            
+            ### 📦 Downloads
+            - iOS and Android builds available via EAS
+            - Use `eas build:list` to find build URLs
+            
+            ### 🔄 Deployment
+            Built from: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Notify Slack Success
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#releases'
+          text: '🎉 Production build completed successfully! Ready for app store submission.'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack Failure
+        uses: 8398a7/action-slack@v3
+        if: failure()
+        with:
+          status: failure
+          channel: '#releases'
+          text: '❌ Production build failed. Please check the logs.'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,87 @@
+{
+  "cli": {
+    "version": ">= 5.4.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "NODE_ENV": "development",
+        "EXPO_DEBUG": "true"
+      }
+    },
+    "staging": {
+      "distribution": "internal",
+      "env": {
+        "NODE_ENV": "staging",
+        "API_BASE_URL": "https://gephrplatform-918p31ego-manojs-projects-7f68a9f9.vercel.app"
+      },
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "apk",
+        "credentialsSource": "local"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "NODE_ENV": "preview",
+        "API_BASE_URL": "https://gephrplatform-918p31ego-manojs-projects-7f68a9f9.vercel.app"
+      },
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "apk",
+        "credentialsSource": "local",
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "production": {
+      "env": {
+        "NODE_ENV": "production",
+        "API_BASE_URL": "https://gephrplatform-918p31ego-manojs-projects-7f68a9f9.vercel.app",
+        "ENABLE_ANALYTICS": "true",
+        "ENABLE_CRASH_REPORTING": "true"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "app-bundle",
+        "credentialsSource": "local"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "dev@gephrlabs.com",
+        "ascAppId": "placeholder-app-id",
+        "appleTeamId": "placeholder-team-id"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "production",
+        "releaseStatus": "completed"
+      }
+    },
+    "staging": {
+      "ios": {
+        "appleId": "dev@gephrlabs.com",
+        "ascAppId": "placeholder-staging-app-id",
+        "appleTeamId": "placeholder-team-id"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      }
+    }
+  }
+}

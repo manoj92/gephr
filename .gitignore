@@ -10,9 +10,9 @@ dist/
 web-build/
 .expo-shared/
 
-# Native builds
-android/
-ios/
+# Native builds (only ignore root-level)
+/android/
+/ios/
 
 # macOS
 .DS_Store

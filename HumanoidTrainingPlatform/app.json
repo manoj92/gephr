@@ -1,0 +1,182 @@
+{
+  "expo": {
+    "name": "Gephr Labs - Humanoid Training Platform",
+    "slug": "gephr-humanoid-training",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "scheme": "gephrlabs",
+    "owner": "manoj92",
+    "privacy": "unlisted",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "sdkVersion": "51.0.0",
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 10000,
+      "url": "https://u.expo.dev/2fdeb1ed-5ff7-49c6-9875-6f0753df31cb"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A0B"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "requireFullScreen": false,
+      "bundleIdentifier": "com.gephrlabs.humanoidtraining",
+      "buildNumber": "1",
+      "backgroundColor": "#0A0A0B",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Gephr Labs uses your camera to capture hand gestures and movements for training humanoid robots. Your camera data is processed locally and never shared without your permission.",
+        "NSMicrophoneUsageDescription": "Gephr Labs uses your microphone to record voice commands and audio cues for comprehensive robot training sessions.",
+        "NSLocationWhenInUseUsageDescription": "Gephr Labs uses your location to provide context-aware robot training and environment mapping features.",
+        "NSMotionUsageDescription": "Gephr Labs uses motion sensors to enhance hand tracking accuracy and provide precise gesture recognition for robot training.",
+        "NSBluetoothAlwaysUsageDescription": "Gephr Labs uses Bluetooth to discover and connect to compatible humanoid robots for real-time training and control.",
+        "NSBluetoothPeripheralUsageDescription": "Gephr Labs uses Bluetooth to communicate with robot hardware and training peripherals.",
+        "NSLocalNetworkUsageDescription": "Gephr Labs uses local network access to discover and connect to robots on your WiFi network.",
+        "NSPhotoLibraryUsageDescription": "Gephr Labs can save your training recordings to your photo library for easy access and sharing.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "background-processing",
+          "bluetooth-central",
+          "background-processing",
+          "bluetooth-central"
+        ]
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "associatedDomains": [
+        "applinks:gephrlabs.com",
+        "applinks:gephrlabs.com"
+      ]
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A0A0B"
+      },
+      "package": "com.gephrlabs.humanoidtraining",
+      "versionCode": 1,
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "minSdkVersion": 23,
+      "edgeToEdgeEnabled": true,
+      "allowBackup": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.INTERNET",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.VIBRATE",
+        "android.permission.ACCESS_MEDIA_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.INTERNET",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.VIBRATE",
+        "android.permission.ACCESS_MEDIA_LOCATION"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": {
+            "scheme": "https",
+            "host": "gephrlabs.com"
+          },
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "data": {
+            "scheme": "https",
+            "host": "gephrlabs.com"
+          },
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Gephr Labs uses your camera to capture precise hand gestures and movements for training humanoid robots. All processing is done locally on your device."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Gephr Labs uses location services to enhance robot training with environmental context and improve mapping accuracy."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Gephr Labs can access your photo library to import reference materials and export training data.",
+          "savePhotosPermission": "Gephr Labs can save your robot training sessions and gesture recordings to your device for future reference.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      "expo-secure-store",
+      "expo-sensors"
+    ],
+    "extra": {
+      "apiUrl": "https://gephrplatform-918p31ego-manojs-projects-7f68a9f9.vercel.app",
+      "sentryDsn": "PLACEHOLDER_SENTRY_DSN",
+      "analyticsApiKey": "PLACEHOLDER_ANALYTICS_KEY",
+      "appEnvironment": "production",
+      "eas": {
+        "projectId": "2fdeb1ed-5ff7-49c6-9875-6f0753df31cb"
+      }
+    },
+    "hooks": {
+      "postPublish": [
+        {
+          "file": "sentry-expo/upload-sourcemaps",
+          "config": {
+            "organization": "gephr-labs",
+            "project": "humanoid-training-platform"
+          }
+        }
+      ]
+    }
+  }
+}
