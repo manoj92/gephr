@@ -1,7 +1,8 @@
 // API Configuration for Humanoid Training Platform
 
-// Deployed Vercel API URL
-export const API_BASE_URL = 'https://gephrplatform-918p31ego-manojs-projects-7f68a9f9.vercel.app';
+// AWS Lambda + API Gateway backend for cloud deployment
+export const API_BASE_URL = 'https://h5ealiw6qj.execute-api.us-east-1.amazonaws.com/prod';
+export const DEMO_MODE = false;
 
 // API endpoints
 export const API_ENDPOINTS = {
