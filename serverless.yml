@@ -1,0 +1,120 @@
+service: humanoid-training-platform
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    STAGE: ${self:provider.stage}
+    ROBOTS_TABLE: ${self:service}-${self:provider.stage}-robots
+    SESSIONS_TABLE: ${self:service}-${self:provider.stage}-sessions
+    MARKETPLACE_TABLE: ${self:service}-${self:provider.stage}-marketplace
+  
+  # IAM permissions
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:service}-${self:provider.stage}-robots"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:service}-${self:provider.stage}-sessions"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:service}-${self:provider.stage}-marketplace"
+
+functions:
+  api:
+    handler: lambda_handler.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors: true
+      - http:
+          path: /
+          method: ANY
+          cors: true
+
+resources:
+  Resources:
+    # DynamoDB Tables
+    RobotsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${self:provider.stage}-robots
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        
+    SessionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${self:provider.stage}-sessions
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        
+    MarketplaceTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${self:provider.stage}-marketplace
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+  Outputs:
+    ApiGatewayRestApiId:
+      Value:
+        Ref: ApiGatewayRestApi
+      Export:
+        Name: ${self:service}-${self:provider.stage}-ApiGatewayRestApiId
+        
+    ApiGatewayRestApiRootResourceId:
+      Value:
+        Fn::GetAtt:
+          - ApiGatewayRestApi
+          - RootResourceId
+      Export:
+        Name: ${self:service}-${self:provider.stage}-ApiGatewayRestApiRootResourceId
+        
+    ApiUrl:
+      Description: API Gateway endpoint URL
+      Value:
+        Fn::Join:
+          - ''
+          - - 'https://'
+            - Ref: ApiGatewayRestApi
+            - '.execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}'
+
+# plugins:
+#   - serverless-python-requirements
+
+# custom:
+#   pythonRequirements:
+#     dockerizePip: true
+#     fileName: lambda_requirements.txt
+#     strip: false
