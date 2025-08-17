@@ -143,10 +143,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Expo](https://expo.dev/) - Mobile development platform
 - [React Native](https://reactnative.dev/) - Cross-platform framework
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/humanoid-training-platform&type=Date)](https://star-history.com/#yourusername/humanoid-training-platform&Date)
-
 ---
 
 <p align="center">
