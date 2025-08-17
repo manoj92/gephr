@@ -1,13 +1,14 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
 
-import HomeScreen from '../screens/HomeScreen';
-import RecordingScreen from '../screens/RecordingScreen';
-import MarketplaceScreen from '../screens/MarketplaceScreen';
+import EnhancedHomeScreen from '../screens/EnhancedHomeScreen';
+import EnhancedRecordingScreen from '../screens/EnhancedRecordingScreen';
+import EnhancedMarketplaceScreen from '../screens/EnhancedMarketplaceScreen';
 import MappingScreen from '../screens/MappingScreen';
-import RobotScreen from '../screens/RobotScreen';
+import EnhancedRobotScreen from '../screens/EnhancedRobotScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -25,23 +26,32 @@ const AppNavigator: React.FC = () => {
     >
       <Tab.Screen 
         name="Home" 
-        component={HomeScreen}
+        component={EnhancedHomeScreen}
         options={{
           tabBarLabel: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen 
         name="Record" 
-        component={RecordingScreen}
+        component={EnhancedRecordingScreen}
         options={{
           tabBarLabel: 'Record',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="radio-button-on" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen 
         name="Marketplace" 
-        component={MarketplaceScreen}
+        component={EnhancedMarketplaceScreen}
         options={{
           tabBarLabel: 'Market',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="storefront" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen 
@@ -49,13 +59,19 @@ const AppNavigator: React.FC = () => {
         component={MappingScreen}
         options={{
           tabBarLabel: 'Map',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen 
         name="Robot" 
-        component={RobotScreen}
+        component={EnhancedRobotScreen}
         options={{
           tabBarLabel: 'Robot',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="robot" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen 
@@ -63,6 +79,9 @@ const AppNavigator: React.FC = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" size={size} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
