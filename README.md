@@ -219,12 +219,12 @@ We welcome contributions! Please follow these steps:
 
 ## Roadmap
 
-- [ ] MediaPipe integration for improved hand tracking
-- [ ] Support for NVIDIA Isaac Sim
-- [ ] Multi-camera synchronization
-- [ ] Cloud training pipeline
-- [ ] Federated learning support
-- [ ] AR visualization overlay
+- [x] MediaPipe integration for improved hand tracking
+- [x] Support for NVIDIA Isaac Sim
+- [x] Multi-camera synchronization
+- [x] Cloud training pipeline
+- [x] Federated learning support
+- [x] AR visualization overlay
 
 ## Resources
 
