@@ -184,48 +184,74 @@ export class AuthService {
       this.validateEmail(email);
       this.validatePassword(password);
 
-      // Hash password for comparison
-      const passwordHash = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        password + 'salt_12345'
-      );
+      // Use actual backend authentication
+      const { API_BASE_URL } = await import('../config/api');
+      
+      // Create form data for OAuth2 password flow
+      const formData = new FormData();
+      formData.append('username', email);
+      formData.append('password', password);
 
-      // Simulate API authentication
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+        method: 'POST',
+        body: formData,
+      });
 
-      // Mock user data (in real app, this comes from server)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Authentication failed');
+      }
+
+      const tokenData = await response.json();
+
+      // Get user profile
+      const userResponse = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${tokenData.access_token}`,
+        },
+      });
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      const backendUser = await userResponse.json();
+
+      // Convert backend user to our User format
       const user: User = {
-        id: `user_${email.replace(/[@.]/g, '_')}`,
-        email,
-        username: email.split('@')[0],
-        displayName: email.split('@')[0],
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        id: backendUser.id,
+        email: backendUser.email,
+        username: backendUser.username,
+        displayName: backendUser.full_name || backendUser.username,
+        avatar: backendUser.avatar_url,
+        createdAt: new Date(backendUser.created_at),
         lastLoginAt: new Date(),
-        isVerified: true,
+        isVerified: backendUser.is_verified,
         subscription: {
-          type: 'pro',
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-          features: ['unlimited_recording', 'marketplace_sell', 'advanced_analytics'],
+          type: backendUser.is_premium ? 'pro' : 'free',
+          features: backendUser.is_premium 
+            ? ['unlimited_recording', 'marketplace_sell', 'advanced_analytics']
+            : ['basic_recording', 'marketplace_browse'],
         },
         stats: {
-          totalRecordings: 47,
-          totalTrainingTime: 3600000,
-          skillsCreated: 12,
-          skillsPurchased: 8,
-          reputation: 850,
-          level: 15,
-          xp: 12400,
+          totalRecordings: backendUser.total_training_hours || 0,
+          totalTrainingTime: backendUser.total_training_hours * 3600 || 0,
+          skillsCreated: backendUser.skills_created || 0,
+          skillsPurchased: backendUser.skills_purchased || 0,
+          reputation: backendUser.experience_points || 0,
+          level: backendUser.level || 1,
+          xp: backendUser.experience_points || 0,
         },
         preferences: {
           theme: 'dark',
           notifications: true,
-          dataSharing: true,
+          dataSharing: false,
           language: 'en',
         },
       };
 
-      const token = await this.generateToken(user.id);
-      const refreshToken = await this.generateRefreshToken(user.id);
+      const token = tokenData.access_token;
+      const refreshToken = tokenData.refresh_token || await this.generateRefreshToken(user.id);
 
       await this.storeAuthData(user, token, refreshToken);
 

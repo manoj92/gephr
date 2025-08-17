@@ -4,11 +4,11 @@ import { StyleSheet } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
 
-import EnhancedHomeScreen from '../screens/EnhancedHomeScreen';
-import EnhancedRecordingScreen from '../screens/EnhancedRecordingScreen';
-import EnhancedMarketplaceScreen from '../screens/EnhancedMarketplaceScreen';
-import Enhanced3DMapScreen from '../screens/Enhanced3DMapScreen';
-import EnhancedRobotScreen from '../screens/EnhancedRobotScreen';
+import HomeScreen from '../screens/HomeScreen';
+import RecordingScreen from '../screens/RecordingScreen';
+import MarketplaceScreen from '../screens/MarketplaceScreen';
+import MappingScreen from '../screens/MappingScreen';
+import RobotScreen from '../screens/RobotScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -26,7 +26,7 @@ const AppNavigator: React.FC = () => {
     >
       <Tab.Screen 
         name="Home" 
-        component={EnhancedHomeScreen}
+        component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
@@ -36,7 +36,7 @@ const AppNavigator: React.FC = () => {
       />
       <Tab.Screen 
         name="Record" 
-        component={EnhancedRecordingScreen}
+        component={RecordingScreen}
         options={{
           tabBarLabel: 'Record',
           tabBarIcon: ({ color, size }) => (
@@ -46,7 +46,7 @@ const AppNavigator: React.FC = () => {
       />
       <Tab.Screen 
         name="Marketplace" 
-        component={EnhancedMarketplaceScreen}
+        component={MarketplaceScreen}
         options={{
           tabBarLabel: 'Market',
           tabBarIcon: ({ color, size }) => (
@@ -56,7 +56,7 @@ const AppNavigator: React.FC = () => {
       />
       <Tab.Screen 
         name="Map" 
-        component={Enhanced3DMapScreen}
+        component={MappingScreen}
         options={{
           tabBarLabel: 'Map',
           tabBarIcon: ({ color, size }) => (
@@ -66,7 +66,7 @@ const AppNavigator: React.FC = () => {
       />
       <Tab.Screen 
         name="Robot" 
-        component={EnhancedRobotScreen}
+        component={RobotScreen}
         options={{
           tabBarLabel: 'Robot',
           tabBarIcon: ({ color, size }) => (

@@ -1,101 +1,163 @@
-# Gephr Humanoid Training Platform
+# Humanoid Training Platform
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![React Native](https://img.shields.io/badge/React%20Native-0.72-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-49-000020.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+Transform smartphone footage into robot training data using advanced hand tracking and computer vision.
 
-> Transform your smartphone into a powerful robot training platform. Capture hand movements, generate LeRobot-compatible datasets, and earn income through our skills marketplace.
+## Overview
 
-## Features
+The Humanoid Training Platform enables developers to create high-quality training datasets for humanoid robots by capturing and processing hand movements from smartphone cameras. Built with React Native and FastAPI, it provides real-time hand tracking, LeRobot-compatible data export, and a marketplace for sharing robot behaviors.
 
-- **Universal Mobile App** - React Native with beautiful dark UI
-- **Hand Tracking** - Real-time computer vision for gesture capture
-- **Robot Control** - Direct connection to Unitree G1, Boston Dynamics, and more
-- **Skills Marketplace** - Buy and sell robot behaviors
-- **3D Mapping** - Environment scanning with LIDAR support
-- **LeRobot Compatible** - Generate training data for Gr00t N1 VLA
+## Key Features
+
+- **Real-time Hand Tracking**: Process camera feeds to detect hand poses and gestures with <50ms latency
+- **LeRobot Integration**: Generate training datasets compatible with LeRobot format
+- **Multi-Robot Support**: Connect to Unitree G1, Boston Dynamics, Tesla Bot, and custom robots
+- **Skills Marketplace**: Share and monetize robot behaviors and training datasets
+- **3D Visualization**: Map environments and visualize robot movements in real-time
+- **Cross-Platform**: iOS, Android, and web support
+
+## Tech Stack
+
+### Frontend
+- React Native 0.79.5 with Expo SDK 53
+- TypeScript 5.8
+- React Navigation 7.x
+- React Native Reanimated 4.0
+- Three.js for 3D rendering
+
+### Backend
+- FastAPI with async support
+- PostgreSQL database
+- WebSocket real-time communication
+- Redis for caching
+- AWS S3 for storage
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js 18+
-- iOS 12+ / Android 8+
-- Smartphone with camera
+- Python 3.9+
+- PostgreSQL 14+
+- Redis 6+
 
 ### Installation
 
+1. Clone the repository:
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/humanoid-training-platform.git
+git clone https://github.com/gephrplatform/humanoid-training-platform.git
 cd humanoid-training-platform
+```
 
-# Install dependencies
+2. Install frontend dependencies:
+```bash
+cd HumanoidTrainingPlatform
 npm install
+```
 
-# Start development server
+3. Install backend dependencies:
+```bash
+cd ../backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+4. Configure environment variables:
+```bash
+# Frontend (.env)
+API_BASE_URL=http://localhost:8000
+
+# Backend (.env)
+DATABASE_URL=postgresql://user:pass@localhost/humanoid_training
+REDIS_URL=redis://localhost:6379
+SECRET_KEY=your-secret-key
+```
+
+5. Start development servers:
+```bash
+# Terminal 1: Backend
+cd backend
+uvicorn app.main:app --reload
+
+# Terminal 2: Frontend
+cd HumanoidTrainingPlatform
 npx expo start
 ```
 
-### First Run
-1. Scan QR code with Expo Go app
-2. Grant camera permissions
-3. Start recording hand movements!
-
-## Architecture
+## Project Structure
 
 ```
-src/
-├── components/          # Reusable UI components
-├── screens/            # Main application screens
-├── services/           # Core business logic
-│   ├── HandTrackingService.ts
-│   ├── RobotService.ts
-│   └── MarketplaceService.ts
-├── navigation/         # App navigation
-├── constants/          # Theme and design tokens
-├── types/             # TypeScript definitions
-└── utils/             # Helper functions
+├── HumanoidTrainingPlatform/   # React Native app
+│   ├── src/
+│   │   ├── components/         # Reusable UI components
+│   │   ├── screens/            # App screens
+│   │   ├── services/           # API and business logic
+│   │   ├── navigation/         # Navigation configuration
+│   │   └── types/              # TypeScript definitions
+│   └── assets/                 # Images and static files
+│
+├── backend/                    # FastAPI backend
+│   ├── app/
+│   │   ├── api/                # API endpoints
+│   │   ├── core/               # Core functionality
+│   │   ├── models/             # Database models
+│   │   ├── schemas/            # Pydantic schemas
+│   │   └── services/           # Business logic
+│   └── tests/                  # Backend tests
+│
+└── docs/                       # Documentation
 ```
 
-## Supported Robots
+## API Documentation
 
-| Robot | Status | Capabilities |
-|-------|--------|-------------|
-| Unitree G1 | Full Support | Navigation, Manipulation, Vision |
-| Custom Robots | Via ROS/ROS2 | Configurable |
+The backend provides a RESTful API with WebSocket support. Once running, view the interactive API documentation at:
 
-## How It Works
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 
-1. **Record** - Keep phone in shirt pocket, perform tasks
-2. **Process** - AI analyzes hand movements and environment
-3. **Export** - Generate LeRobot-compatible training data
-4. **Train** - Use data to finetune robot models
-5. **Deploy** - Execute trained behaviors on real robots
-6. **Earn** - Sell successful skills in marketplace
+### Main Endpoints
 
-## LeRobot Integration
-
-```python
-# Example: Loading data in LeRobot
-from lerobot.datasets import load_dataset
-
-dataset = load_dataset("humanoid-training-platform/kitchen-tasks")
-for episode in dataset:
-    observation = episode["observation"]
-    action = episode["action"]
-    # Train your model...
-```
+- `POST /api/v1/auth/login` - User authentication
+- `GET /api/v1/robots` - List available robots
+- `POST /api/v1/training/sessions` - Create training session
+- `POST /api/v1/tracking/hand-pose` - Process hand tracking data
+- `GET /api/v1/marketplace` - Browse marketplace items
+- `WS /ws/robot/{id}` - WebSocket connection for real-time robot control
 
 ## Development
 
 ### Running Tests
+
 ```bash
+# Frontend tests
+cd HumanoidTrainingPlatform
 npm test
+
+# Backend tests
+cd backend
+pytest
+```
+
+### Code Style
+
+- Frontend: ESLint + Prettier
+- Backend: Black + isort + mypy
+
+```bash
+# Frontend linting
+npm run lint
+
+# Backend formatting
+black app/
+isort app/
+mypy app/
 ```
 
 ### Building for Production
+
+#### Mobile Apps
 ```bash
+cd HumanoidTrainingPlatform
+
 # iOS
 npx expo build:ios
 
@@ -103,49 +165,91 @@ npx expo build:ios
 npx expo build:android
 ```
 
-### Contributing
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
+#### Backend Deployment
+```bash
+cd backend
+docker build -t humanoid-platform-backend .
+docker run -p 8000:8000 humanoid-platform-backend
+```
+
+## Contributing
+
+We welcome contributions! Please follow these steps:
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## Performance
+### Development Guidelines
 
-- **Hand Tracking**: 95%+ accuracy, <50ms latency
-- **Battery Life**: 4+ hours continuous recording
-- **Data Rate**: ~1GB per hour of training data
-- **Compression**: 80% size reduction with quality preservation
+- Write clear, self-documenting code
+- Add tests for new features
+- Update documentation as needed
+- Follow existing code style
+- Keep commits atomic and meaningful
 
-## Privacy & Security
+### Areas for Contribution
 
-- Local hand tracking processing
-- Encrypted data storage
-- Anonymous contribution options
-- GDPR compliant
-- Open source transparency
+- **Computer Vision**: Improve hand tracking accuracy and performance
+- **Robot Integration**: Add support for new robot platforms
+- **UI/UX**: Enhance mobile app interface and user experience
+- **Backend**: Optimize API performance and add new features
+- **Documentation**: Improve guides and API documentation
+- **Testing**: Increase test coverage and add E2E tests
+
+## Architecture
+
+### Data Flow
+
+1. **Capture**: Smartphone camera captures video frames
+2. **Process**: Hand tracking service extracts pose data
+3. **Transform**: Convert to LeRobot-compatible format
+4. **Store**: Save training data to database
+5. **Export**: Generate datasets for robot training
+
+### Security
+
+- JWT-based authentication
+- AES-256 encryption for sensitive data
+- Rate limiting on API endpoints
+- Input validation and sanitization
+- CORS protection
+
+## Roadmap
+
+- [ ] MediaPipe integration for improved hand tracking
+- [ ] Support for NVIDIA Isaac Sim
+- [ ] Multi-camera synchronization
+- [ ] Cloud training pipeline
+- [ ] Federated learning support
+- [ ] AR visualization overlay
+
+## Resources
+
+- [Documentation](https://docs.humanoidplatform.com)
+- [API Reference](https://api.humanoidplatform.com/docs)
+- [Discord Community](https://discord.gg/humanoidplatform)
+- [Blog](https://blog.humanoidplatform.com)
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Community
+## Support
 
-- [Report Issues](https://github.com/manoj92/gephr/issues)
-- Email: info@gephr.com
+- GitHub Issues: [Report bugs or request features](https://github.com/gephrplatform/humanoid-training-platform/issues)
+- Email: support@humanoidplatform.com
+- Discord: Join our community for discussions
 
 ## Acknowledgments
 
-- [LeRobot](https://github.com/huggingface/lerobot) - Robotics framework
-- [MediaPipe](https://mediapipe.dev/) - Hand tracking technology
-- [Expo](https://expo.dev/) - Mobile development platform
-- [React Native](https://reactnative.dev/) - Cross-platform framework
+- LeRobot team for dataset format specification
+- MediaPipe for hand tracking models
+- React Native community for mobile framework
+- FastAPI team for excellent Python web framework
 
 ---
 
-<p align="center">
-  <strong>The future of robotics is in your pocket</strong><br>
-  <em>Contribute to the building of the next generation of humanoid robots</em>
-</p></p>
+Built with passion for advancing humanoid robotics. Join us in democratizing robot training!

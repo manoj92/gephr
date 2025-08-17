@@ -1,7 +1,9 @@
 // API Configuration for Humanoid Training Platform
 
-// AWS Lambda + API Gateway backend for cloud deployment
-export const API_BASE_URL = 'https://h5ealiw6qj.execute-api.us-east-1.amazonaws.com/prod';
+// Development backend
+export const API_BASE_URL = __DEV__ 
+  ? 'http://localhost:8000'  // Development
+  : 'https://h5ealiw6qj.execute-api.us-east-1.amazonaws.com/prod';  // Production
 export const DEMO_MODE = false;
 
 // API endpoints
