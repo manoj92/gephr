@@ -10,7 +10,7 @@ class Robot(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, nullable=False)
-    robot_type = Column(String, nullable=False)  # 'unitree_g1', 'boston_dynamics', 'tesla_bot', 'custom'
+    robot_type = Column(String, nullable=False)  # 'unitree_g1', 'custom_humanoid'
     model = Column(String)
     serial_number = Column(String, unique=True)
     

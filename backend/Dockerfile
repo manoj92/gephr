@@ -23,7 +23,7 @@ RUN apt-get update \
         libpng-dev \
         libopencv-dev \
         python3-opencv \
-        libgl1-mesa-glx \
+        libgl1-mesa-dev \
         libglib2.0-0 \
         libsm6 \
         libxext6 \

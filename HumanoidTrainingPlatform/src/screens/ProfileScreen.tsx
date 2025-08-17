@@ -1,25 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Modal, Switch, ActivityIndicator, Image } from 'react-native';
+/**
+ * Enhanced Profile Screen with advanced UI, animations, and interactions
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+  TextInput,
+  Modal,
+  Switch,
+  ActivityIndicator,
+  Image,
+  Animated,
+  Dimensions,
+  Easing,
+  RefreshControl,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../constants/theme';
 import { authService, User } from '../services/AuthService';
 import { marketplaceService } from '../services/MarketplaceService';
+import { AdvancedButton } from '../components/ui/AdvancedButton';
+import { GlassCard } from '../components/ui/GlassCard';
+import { ValidatedTextInput, ValidatedPasswordInput } from '../components/forms/ValidatedInput';
+import { useFormValidation, ValidationRules, UserRegistrationSchema } from '../utils/validation';
+import { useFloatingAnimation, usePulseAnimation, useShakeAnimation } from '../components/animations/AnimationLibrary';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [earnings, setEarnings] = useState(0);
   const [userBalance, setUserBalance] = useState(0);
+  const [achievementsVisible, setAchievementsVisible] = useState(false);
   
-  // Edit form state
-  const [editForm, setEditForm] = useState({
-    displayName: '',
-    username: '',
-    email: '',
-  });
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  
+  // Custom animations
+  const floatingAnim = useFloatingAnimation();
+  const pulseAnim = usePulseAnimation();
+  const shakeAnim = useShakeAnimation();
+  
+  // Form validation
+  const {
+    values: editForm,
+    errors: editErrors,
+    touched: editTouched,
+    isValid: editFormValid,
+    setValue: setEditValue,
+    setTouched: setEditTouched,
+    submitForm: submitEditForm,
+    resetForm: resetEditForm,
+  } = useFormValidation(
+    {
+      displayName: '',
+      username: '',
+      email: '',
+    },
+    {
+      displayName: [ValidationRules.required(), ValidationRules.minLength(2), ValidationRules.maxLength(50)],
+      username: [ValidationRules.required(), ValidationRules.minLength(3), ValidationRules.alphanumeric()],
+      email: [ValidationRules.required(), ValidationRules.email()],
+    }
+  );
 
   // Settings form state
   const [settings, setSettings] = useState({
@@ -31,24 +90,74 @@ const ProfileScreen: React.FC = () => {
 
   useEffect(() => {
     loadUserData();
+    
+    // Initialize entrance animations
+    Animated.sequence([
+      Animated.delay(200),
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+    
+    // Continuous subtle rotation for avatar
+    const avatarRotation = Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 20000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    avatarRotation.start();
+    
+    return () => avatarRotation.stop();
   }, []);
 
-  const loadUserData = async () => {
+  const loadUserData = async (refresh = false) => {
     try {
-      setLoading(true);
+      if (refresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      
       const currentUser = authService.getCurrentUser();
       if (!currentUser) {
-        // Redirect to login screen
-        Alert.alert('Not Authenticated', 'Please sign in to access your profile');
+        Alert.alert(
+          'Authentication Required',
+          'Please sign in to access your profile',
+          [
+            { text: 'Sign In', onPress: () => {/* Navigate to login */} },
+            { text: 'Cancel', style: 'cancel' },
+          ]
+        );
         return;
       }
 
       setUser(currentUser);
-      setEditForm({
-        displayName: currentUser.displayName,
-        username: currentUser.username,
-        email: currentUser.email,
-      });
+      
+      // Set form values
+      setEditValue('displayName', currentUser.displayName);
+      setEditValue('username', currentUser.username);
+      setEditValue('email', currentUser.email);
+      
       setSettings({
         theme: currentUser.preferences.theme,
         notifications: currentUser.preferences.notifications,
@@ -56,19 +165,32 @@ const ProfileScreen: React.FC = () => {
         biometricEnabled: await authService.isBiometricEnabled(),
       });
 
-      // Load earnings and balance
-      const [userEarnings, balance] = await Promise.all([
-        marketplaceService.getEarnings(currentUser.id),
-        marketplaceService.getUserBalance(currentUser.id),
-      ]);
-      
-      setEarnings(userEarnings);
-      setUserBalance(balance);
+      // Load earnings and balance with better error handling
+      try {
+        const [userEarnings, balance] = await Promise.all([
+          marketplaceService.getEarnings(currentUser.id),
+          marketplaceService.getUserBalance(currentUser.id),
+        ]);
+        
+        setEarnings(userEarnings);
+        setUserBalance(balance);
+      } catch (marketplaceError) {
+        console.warn('Failed to load marketplace data:', marketplaceError);
+        // Don't fail the whole profile load for marketplace data
+      }
     } catch (error) {
       console.error('Failed to load user data:', error);
-      Alert.alert('Error', 'Failed to load profile data');
+      Alert.alert(
+        'Connection Error',
+        'Failed to load profile data. Please check your connection and try again.',
+        [
+          { text: 'Retry', onPress: () => loadUserData(refresh) },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -79,6 +201,18 @@ const ProfileScreen: React.FC = () => {
   const handleSaveProfile = async () => {
     if (!user) return;
     
+    const validation = submitEditForm();
+    if (!validation.isValid) {
+      // Trigger shake animation for validation errors
+      shakeAnim.start();
+      Alert.alert(
+        'Validation Error',
+        'Please fix the errors in the form before saving.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
     try {
       const updatedUser = await authService.updateProfile({
         displayName: editForm.displayName,
@@ -88,10 +222,26 @@ const ProfileScreen: React.FC = () => {
       
       setUser(updatedUser);
       setEditModalVisible(false);
-      Alert.alert('Success', 'Profile updated successfully!');
+      
+      // Success animation
+      Animated.sequence([
+        Animated.timing(scaleAnim, { toValue: 1.1, duration: 150, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+      ]).start();
+      
+      Alert.alert(
+        'Profile Updated',
+        'Your profile has been updated successfully!',
+        [{ text: 'Great!', style: 'default' }]
+      );
     } catch (error) {
       console.error('Profile update failed:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update profile');
+      shakeAnim.start();
+      Alert.alert(
+        'Update Failed',
+        error instanceof Error ? error.message : 'Failed to update profile. Please try again.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
@@ -223,19 +373,96 @@ const ProfileScreen: React.FC = () => {
   };
 
   const handleViewAchievements = () => {
-    if (!user) return;
+    setAchievementsVisible(true);
+  };
+  
+  const renderAchievements = () => {
+    if (!user) return null;
     
     const achievements = [
-      'First Recording Completed',
-      'Marketplace Explorer',
-      `Level ${user.stats.level} Trainer`,
-      '100+ Training Sessions',
-      'Data Contributor',
+      { title: 'First Steps', description: 'Completed your first recording', icon: 'trophy-outline', unlocked: true },
+      { title: 'Marketplace Explorer', description: 'Browsed 10+ skills', icon: 'compass-outline', unlocked: true },
+      { title: `Level ${user.stats.level} Trainer`, description: 'Reached training level', icon: 'star-outline', unlocked: true },
+      { title: 'Century Club', description: '100+ training sessions', icon: 'medal-outline', unlocked: user.stats.totalRecordings >= 100 },
+      { title: 'Data Contributor', description: 'Uploaded valuable datasets', icon: 'cloud-upload-outline', unlocked: user.stats.skillsCreated > 0 },
+      { title: 'Reputation Master', description: 'Earned 1000+ reputation', icon: 'shield-checkmark-outline', unlocked: user.stats.reputation >= 1000 },
     ];
     
-    Alert.alert(
-      'Achievements',
-      `🏆 ${achievements.join('\n🏆 ')}\n\nTotal XP: ${user.stats.xp.toLocaleString()}\nReputation: ${user.stats.reputation}`
+    return (
+      <Modal
+        visible={achievementsVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setAchievementsVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <GlassCard style={styles.achievementsModal} intensity={80}>
+            <View style={styles.achievementsHeader}>
+              <Text style={styles.achievementsTitle}>Achievements</Text>
+              <TouchableOpacity
+                onPress={() => setAchievementsVisible(false)}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.achievementsList}>
+              {achievements.map((achievement, index) => (
+                <Animated.View
+                  key={achievement.title}
+                  style={[
+                    styles.achievementItem,
+                    !achievement.unlocked && styles.achievementLocked,
+                    {
+                      transform: [
+                        {
+                          scale: pulseAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [1, achievement.unlocked ? 1.02 : 1],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <View style={[
+                    styles.achievementIcon,
+                    achievement.unlocked && styles.achievementIconUnlocked
+                  ]}>
+                    <Ionicons
+                      name={achievement.icon as any}
+                      size={24}
+                      color={achievement.unlocked ? COLORS.primary : COLORS.textSecondary}
+                    />
+                  </View>
+                  <View style={styles.achievementContent}>
+                    <Text style={[
+                      styles.achievementTitle,
+                      !achievement.unlocked && styles.achievementTitleLocked
+                    ]}>
+                      {achievement.title}
+                    </Text>
+                    <Text style={styles.achievementDescription}>
+                      {achievement.description}
+                    </Text>
+                  </View>
+                  {achievement.unlocked && (
+                    <View style={styles.unlockedBadge}>
+                      <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+                    </View>
+                  )}
+                </Animated.View>
+              ))}
+            </ScrollView>
+            
+            <View style={styles.achievementsFooter}>
+              <Text style={styles.xpText}>Total XP: {user.stats.xp.toLocaleString()}</Text>
+              <Text style={styles.reputationText}>Reputation: {user.stats.reputation}</Text>
+            </View>
+          </GlassCard>
+        </View>
+      </Modal>
     );
   };
 
@@ -277,8 +504,29 @@ const ProfileScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView>
+    <Animated.View 
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+          transform: [
+            { translateY: slideAnim },
+            { scale: scaleAnim },
+          ],
+        },
+      ]}
+    >
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadUserData(true)}
+            tintColor={COLORS.primary}
+            colors={[COLORS.primary]}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Profile</Text>
           <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
@@ -286,67 +534,237 @@ const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.profileCard}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
+        {/* Enhanced Profile Card */}
+        <GlassCard style={styles.profileCard} intensity={60}>
+          <LinearGradient
+            colors={[COLORS.primary + '20', 'transparent']}
+            style={styles.profileGradient}
+          />
+          <Animated.View 
+            style={[
+              styles.avatarContainer,
+              {
+                transform: [
+                  {
+                    rotate: rotateAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '360deg'],
+                    }),
+                  },
+                  {
+                    scale: pulseAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.05],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <LinearGradient
+              colors={[COLORS.primary, COLORS.secondary]}
+              style={styles.avatar}
+            >
               <Text style={styles.avatarText}>{getInitials(user.displayName)}</Text>
+            </LinearGradient>
+            <View style={styles.statusIndicator}>
+              <View style={styles.onlineStatus} />
             </View>
-          </View>
-          <Text style={styles.userName}>{user.displayName}</Text>
-          <Text style={styles.userEmail}>{user.email}</Text>
-          <Text style={styles.userLevel}>Level {user.stats.level} Trainer</Text>
-          <View style={styles.subscriptionBadge}>
-            <Text style={styles.subscriptionText}>{user.subscription.type.toUpperCase()}</Text>
-          </View>
-        </View>
+          </Animated.View>
+          
+          <Animated.View 
+            style={[
+              styles.userInfo,
+              {
+                transform: [
+                  {
+                    translateY: floatingAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, -3],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <Text style={styles.userName}>{user.displayName}</Text>
+            <Text style={styles.userEmail}>{user.email}</Text>
+            <View style={styles.levelContainer}>
+              <Ionicons name="star" size={16} color={COLORS.primary} />
+              <Text style={styles.userLevel}>Level {user.stats.level} Trainer</Text>
+            </View>
+            
+            <View style={styles.subscriptionContainer}>
+              <LinearGradient
+                colors={user.subscription.type === 'premium' ? [COLORS.primary, COLORS.secondary] : [COLORS.border, COLORS.surface]}
+                style={styles.subscriptionBadge}
+              >
+                <Ionicons 
+                  name={user.subscription.type === 'premium' ? 'diamond' : 'person'} 
+                  size={12} 
+                  color={user.subscription.type === 'premium' ? COLORS.background : COLORS.text} 
+                />
+                <Text style={[
+                  styles.subscriptionText,
+                  { color: user.subscription.type === 'premium' ? COLORS.background : COLORS.text }
+                ]}>
+                  {user.subscription.type.toUpperCase()}
+                </Text>
+              </LinearGradient>
+            </View>
+          </Animated.View>
+        </GlassCard>
 
-        <View style={styles.balanceCard}>
-          <View style={styles.balanceItem}>
+        {/* Enhanced Balance Cards */}
+        <View style={styles.balanceContainer}>
+          <GlassCard style={styles.balanceCard} intensity={40}>
+            <LinearGradient
+              colors={[COLORS.primary + '20', 'transparent']}
+              style={styles.balanceGradient}
+            />
+            <Ionicons name="wallet-outline" size={24} color={COLORS.primary} />
             <Text style={styles.balanceLabel}>Balance</Text>
-            <Text style={styles.balanceValue}>${userBalance.toFixed(2)}</Text>
-          </View>
-          <View style={styles.balanceItem}>
+            <Animated.Text 
+              style={[
+                styles.balanceValue,
+                {
+                  transform: [
+                    {
+                      scale: pulseAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 1.02],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              ${userBalance.toFixed(2)}
+            </Animated.Text>
+            <Text style={styles.balanceSubtext}>Available</Text>
+          </GlassCard>
+          
+          <GlassCard style={styles.balanceCard} intensity={40}>
+            <LinearGradient
+              colors={[COLORS.success + '20', 'transparent']}
+              style={styles.balanceGradient}
+            />
+            <Ionicons name="trending-up-outline" size={24} color={COLORS.success} />
             <Text style={styles.balanceLabel}>Earnings</Text>
-            <Text style={styles.balanceValue}>${earnings.toFixed(2)}</Text>
-          </View>
+            <Animated.Text 
+              style={[
+                styles.balanceValue,
+                { color: COLORS.success },
+                {
+                  transform: [
+                    {
+                      scale: pulseAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 1.02],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              ${earnings.toFixed(2)}
+            </Animated.Text>
+            <Text style={styles.balanceSubtext}>Total earned</Text>
+          </GlassCard>
         </View>
 
+        {/* Enhanced Stats Section */}
         <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>Your Stats</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Your Stats</Text>
+            <TouchableOpacity onPress={handleViewAchievements}>
+              <Ionicons name="trophy-outline" size={20} color={COLORS.primary} />
+            </TouchableOpacity>
+          </View>
+          
           <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{user.stats.totalRecordings}</Text>
-              <Text style={styles.statLabel}>Recordings</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{user.stats.skillsCreated}</Text>
-              <Text style={styles.statLabel}>Skills Created</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{user.stats.xp.toLocaleString()}</Text>
-              <Text style={styles.statLabel}>XP Points</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{user.stats.reputation}</Text>
-              <Text style={styles.statLabel}>Reputation</Text>
-            </View>
+            {[
+              { value: user.stats.totalRecordings, label: 'Recordings', icon: 'videocam-outline', color: COLORS.primary },
+              { value: user.stats.skillsCreated, label: 'Skills Created', icon: 'construct-outline', color: COLORS.secondary },
+              { value: user.stats.xp.toLocaleString(), label: 'XP Points', icon: 'star-outline', color: COLORS.warning },
+              { value: user.stats.reputation, label: 'Reputation', icon: 'shield-checkmark-outline', color: COLORS.success },
+            ].map((stat, index) => (
+              <Animated.View
+                key={stat.label}
+                style={[
+                  {
+                    transform: [
+                      {
+                        scale: pulseAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [1, 1.02],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <GlassCard style={styles.statCard} intensity={30}>
+                  <View style={styles.statIconContainer}>
+                    <Ionicons name={stat.icon as any} size={20} color={stat.color} />
+                  </View>
+                  <Text style={[styles.statValue, { color: stat.color }]}>{stat.value}</Text>
+                  <Text style={styles.statLabel}>{stat.label}</Text>
+                </GlassCard>
+              </Animated.View>
+            ))}
           </View>
         </View>
 
+        {/* Enhanced Quick Actions */}
         <View style={styles.quickActionsSection}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Record' as never)}>
-            <Text style={styles.actionButtonText}>Start Training Session</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Marketplace' as never)}>
-            <Text style={styles.actionButtonText}>Browse Marketplace</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={handleViewAchievements}>
-            <Text style={styles.actionButtonText}>View Achievements</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={handleTrainingHistory}>
-            <Text style={styles.actionButtonText}>Training History</Text>
-          </TouchableOpacity>
+          
+          <View style={styles.actionsGrid}>
+            <AdvancedButton
+              variant="primary"
+              size="large"
+              onPress={() => navigation.navigate('Record' as never)}
+              style={styles.actionButton}
+              effectType="glow"
+            >
+              <Ionicons name="videocam" size={20} color={COLORS.background} />
+              <Text style={styles.actionButtonText}>Start Training</Text>
+            </AdvancedButton>
+            
+            <AdvancedButton
+              variant="secondary"
+              size="large"
+              onPress={() => navigation.navigate('Marketplace' as never)}
+              style={styles.actionButton}
+              effectType="ripple"
+            >
+              <Ionicons name="storefront" size={20} color={COLORS.text} />
+              <Text style={[styles.actionButtonText, { color: COLORS.text }]}>Marketplace</Text>
+            </AdvancedButton>
+            
+            <AdvancedButton
+              variant="secondary"
+              size="large"
+              onPress={handleViewAchievements}
+              style={styles.actionButton}
+              effectType="morph"
+            >
+              <Ionicons name="trophy" size={20} color={COLORS.text} />
+              <Text style={[styles.actionButtonText, { color: COLORS.text }]}>Achievements</Text>
+            </AdvancedButton>
+            
+            <AdvancedButton
+              variant="secondary"
+              size="large"
+              onPress={handleTrainingHistory}
+              style={styles.actionButton}
+              effectType="liquid"
+            >
+              <Ionicons name="analytics" size={20} color={COLORS.text} />
+              <Text style={[styles.actionButtonText, { color: COLORS.text }]}>History</Text>
+            </AdvancedButton>
+          </View>
         </View>
 
         <View style={styles.settingsSection}>
@@ -371,8 +789,11 @@ const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      
+      {/* Render Achievements Modal */}
+      {renderAchievements()}
 
-      {/* Edit Profile Modal */}
+      {/* Enhanced Edit Profile Modal */}
       <Modal
         visible={editModalVisible}
         animationType="slide"
@@ -383,38 +804,66 @@ const ProfileScreen: React.FC = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Edit Profile</Text>
             
-            <Text style={styles.inputLabel}>Display Name</Text>
-            <TextInput
-              style={styles.textInput}
+            <ValidatedTextInput
+              label="Display Name"
               value={editForm.displayName}
-              onChangeText={(text) => setEditForm({...editForm, displayName: text})}
-              placeholder="Enter display name"
+              onChangeText={(text) => setEditValue('displayName', text)}
+              onBlur={() => setEditTouched('displayName')}
+              placeholder="Enter your display name"
+              rules={[ValidationRules.required(), ValidationRules.minLength(2), ValidationRules.maxLength(50)]}
+              required
+              style={styles.inputContainer}
             />
 
-            <Text style={styles.inputLabel}>Username</Text>
-            <TextInput
-              style={styles.textInput}
+            <ValidatedTextInput
+              label="Username"
               value={editForm.username}
-              onChangeText={(text) => setEditForm({...editForm, username: text})}
-              placeholder="Enter username"
+              onChangeText={(text) => setEditValue('username', text)}
+              onBlur={() => setEditTouched('username')}
+              placeholder="Enter your username"
+              rules={[ValidationRules.required(), ValidationRules.minLength(3), ValidationRules.alphanumeric()]}
+              required
+              autoCapitalize="none"
+              style={styles.inputContainer}
             />
 
-            <Text style={styles.inputLabel}>Email</Text>
-            <TextInput
-              style={styles.textInput}
+            <ValidatedTextInput
+              label="Email"
               value={editForm.email}
-              onChangeText={(text) => setEditForm({...editForm, email: text})}
-              placeholder="Enter email"
+              onChangeText={(text) => setEditValue('email', text)}
+              onBlur={() => setEditTouched('email')}
+              placeholder="Enter your email address"
+              rules={[ValidationRules.required(), ValidationRules.email()]}
+              required
               keyboardType="email-address"
+              autoCapitalize="none"
+              style={styles.inputContainer}
             />
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setEditModalVisible(false)}>
+              <AdvancedButton
+                variant="secondary"
+                size="large"
+                onPress={() => {
+                  setEditModalVisible(false);
+                  resetEditForm();
+                }}
+                style={styles.modalButton}
+                effectType="ripple"
+              >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
+              </AdvancedButton>
+              
+              <AdvancedButton
+                variant="primary"
+                size="large"
+                onPress={handleSaveProfile}
+                style={styles.modalButton}
+                effectType="glow"
+                disabled={!editFormValid}
+              >
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              </AdvancedButton>
             </View>
           </View>
         </View>
@@ -799,6 +1248,93 @@ const styles = StyleSheet.create({
   },
   themeButtonTextSelected: {
     color: COLORS.background,
+  },
+  // Achievements Modal Styles
+  achievementsModal: {
+    width: '90%',
+    maxHeight: '80%',
+    padding: SPACING.xl,
+  },
+  achievementsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  achievementsTitle: {
+    ...TYPOGRAPHY.h2,
+    color: COLORS.text,
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    padding: SPACING.sm,
+  },
+  achievementsList: {
+    maxHeight: screenHeight * 0.5,
+  },
+  achievementItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    marginBottom: SPACING.sm,
+    backgroundColor: COLORS.surface + '80',
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border + '40',
+  },
+  achievementLocked: {
+    opacity: 0.5,
+  },
+  achievementIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: COLORS.border + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.md,
+  },
+  achievementIconUnlocked: {
+    backgroundColor: COLORS.primary + '20',
+  },
+  achievementContent: {
+    flex: 1,
+  },
+  achievementTitle: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.text,
+    fontWeight: '600',
+    marginBottom: SPACING.xs,
+  },
+  achievementTitleLocked: {
+    color: COLORS.textSecondary,
+  },
+  achievementDescription: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
+    fontSize: 12,
+  },
+  unlockedBadge: {
+    marginLeft: SPACING.sm,
+  },
+  achievementsFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: SPACING.lg,
+    paddingTop: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border + '40',
+  },
+  xpText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.warning,
+    fontWeight: '600',
+  },
+  reputationText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.success,
+    fontWeight: '600',
   },
 });
 

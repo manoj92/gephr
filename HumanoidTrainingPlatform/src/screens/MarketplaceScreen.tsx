@@ -1,46 +1,181 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Modal, ActivityIndicator, Image } from 'react-native';
+/**
+ * Enhanced Marketplace Screen with advanced UI and animations
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+  TextInput,
+  Modal,
+  ActivityIndicator,
+  Image,
+  Animated,
+  Dimensions,
+  Easing,
+  FlatList,
+  RefreshControl,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../constants/theme';
 import { marketplaceService } from '../services/MarketplaceService';
 import { SkillListing, RobotType } from '../types';
+import { AdvancedButton } from '../components/ui/AdvancedButton';
+import { GlassCard } from '../components/ui/GlassCard';
+import { ValidatedTextInput } from '../components/forms/ValidatedInput';
+import { useFieldValidation, ValidationRules } from '../utils/validation';
+import { Draggable, SwipeableCard } from '../components/interactions/GestureSystem';
+import { useParticleSystem, useFloatingAnimation, usePulseAnimation } from '../components/animations/AnimationLibrary';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const MarketplaceScreen: React.FC = () => {
   const navigation = useNavigation();
   const [skills, setSkills] = useState<SkillListing[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedRobotType, setSelectedRobotType] = useState<RobotType | ''>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [userBalance, setUserBalance] = useState(0);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<'price' | 'rating' | 'downloads' | 'recent'>('rating');
+
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  
+  // Custom hooks for animations
+  const floatingAnim = useFloatingAnimation();
+  const pulseAnim = usePulseAnimation();
+  const particles = useParticleSystem(10);
+  
+  // Validation
+  const searchValidation = useFieldValidation(searchQuery, [ValidationRules.maxLength(100)]);
+  const priceValidation = useFieldValidation(maxPrice, [ValidationRules.pattern(/^\d*\.?\d*$/, 'Please enter a valid price')]);
 
   const currentUserId = 'user_current'; // In real app, get from auth context
 
   useEffect(() => {
     loadData();
+    
+    // Initialize entrance animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
+    // Continuous rotation animation for loading states
+    const rotationLoop = Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 3000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    rotationLoop.start();
+    
+    return () => rotationLoop.stop();
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (refresh = false) => {
     try {
-      setLoading(true);
+      if (refresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      
       const [skillsData, categoriesData, balance] = await Promise.all([
         marketplaceService.getFeaturedSkills(),
         marketplaceService.getPopularCategories(),
         marketplaceService.getUserBalance(currentUserId),
       ]);
       
-      setSkills(skillsData);
+      // Apply sorting
+      const sortedSkills = sortSkills(skillsData, sortBy);
+      
+      setSkills(sortedSkills);
       setCategories(categoriesData);
       setUserBalance(balance);
+      
+      // Animate skill cards entrance
+      animateSkillsEntrance();
     } catch (error) {
       console.error('Failed to load marketplace data:', error);
-      Alert.alert('Error', 'Failed to load marketplace data');
+      Alert.alert(
+        'Connection Error',
+        'Failed to load marketplace data. Please check your internet connection and try again.',
+        [
+          { text: 'Retry', onPress: () => loadData(refresh) },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+  
+  const sortSkills = (skillsData: SkillListing[], sortType: typeof sortBy) => {
+    return [...skillsData].sort((a, b) => {
+      switch (sortType) {
+        case 'price':
+          return a.price - b.price;
+        case 'rating':
+          return b.rating - a.rating;
+        case 'downloads':
+          return b.downloads - a.downloads;
+        case 'recent':
+          return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime();
+        default:
+          return 0;
+      }
+    });
+  };
+  
+  const animateSkillsEntrance = () => {
+    const staggerDelay = 100;
+    skills.forEach((_, index) => {
+      Animated.sequence([
+        Animated.delay(index * staggerDelay),
+        Animated.spring(new Animated.Value(0), {
+          toValue: 1,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
   };
 
   const handleSearch = async () => {
@@ -172,40 +307,139 @@ const MarketplaceScreen: React.FC = () => {
     }
   };
 
-  const renderSkillCard = (skill: SkillListing) => (
-    <TouchableOpacity 
-      key={skill.id} 
-      style={styles.skillCard}
-      onPress={() => handleSkillPress(skill)}
-    >
-      {skill.thumbnailUrl && (
-        <Image source={{ uri: skill.thumbnailUrl }} style={styles.skillThumbnail} />
-      )}
-      <View style={styles.skillHeader}>
-        <Text style={styles.skillName}>{skill.title}</Text>
-        <Text style={styles.skillPrice}>${skill.price}</Text>
-      </View>
-      <Text style={styles.skillDescription} numberOfLines={2}>{skill.description}</Text>
-      <View style={styles.skillTags}>
-        {skill.tags.slice(0, 3).map(tag => (
-          <View key={tag} style={styles.tag}>
-            <Text style={styles.tagText}>{tag}</Text>
-          </View>
-        ))}
-      </View>
-      <View style={styles.skillStats}>
-        <Text style={styles.skillRating}>★ {skill.rating.toFixed(1)}</Text>
-        <Text style={styles.skillDownloads}>{skill.downloads} downloads</Text>
-        <Text style={styles.skillSize}>{skill.datasetSize}GB</Text>
-      </View>
-      <View style={styles.skillRobotTypes}>
-        <Text style={styles.robotTypesLabel}>Compatible:</Text>
-        <Text style={styles.robotTypes} numberOfLines={1}>
-          {skill.robotTypes.map(type => type.replace('_', ' ')).join(', ')}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderSkillCard = (skill: SkillListing, index: number) => {
+    const cardScale = useRef(new Animated.Value(1)).current;
+    
+    const handlePressIn = () => {
+      Animated.spring(cardScale, {
+        toValue: 0.95,
+        tension: 300,
+        friction: 10,
+        useNativeDriver: true,
+      }).start();
+    };
+    
+    const handlePressOut = () => {
+      Animated.spring(cardScale, {
+        toValue: 1,
+        tension: 300,
+        friction: 10,
+        useNativeDriver: true,
+      }).start();
+    };
+    
+    return (
+      <SwipeableCard
+        key={skill.id}
+        onSwipeLeft={() => {
+          Alert.alert('Added to Wishlist', `${skill.title} added to your wishlist!`);
+        }}
+        onSwipeRight={() => handlePurchaseSkill(skill)}
+        style={[styles.skillCard, viewMode === 'grid' ? styles.skillCardGrid : styles.skillCardList]}
+      >
+        <Animated.View style={{ transform: [{ scale: cardScale }] }}>
+          <TouchableOpacity
+            onPress={() => handleSkillPress(skill)}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            activeOpacity={0.9}
+          >
+            <GlassCard
+              intensity={80}
+              style={styles.glassCard}
+              borderRadius={16}
+              borderWidth={1}
+              borderOpacity={0.2}
+            >
+              {skill.thumbnailUrl && (
+                <View style={styles.thumbnailContainer}>
+                  <Image source={{ uri: skill.thumbnailUrl }} style={styles.skillThumbnail} />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.7)']}
+                    style={styles.thumbnailOverlay}
+                  />
+                  <View style={styles.ratingBadge}>
+                    <Ionicons name="star" size={12} color="#FFD700" />
+                    <Text style={styles.ratingText}>{skill.rating.toFixed(1)}</Text>
+                  </View>
+                </View>
+              )}
+              
+              <View style={styles.skillContent}>
+                <View style={styles.skillHeader}>
+                  <Text style={styles.skillName} numberOfLines={2}>{skill.title}</Text>
+                  <View style={styles.priceContainer}>
+                    <Text style={styles.skillPrice}>${skill.price}</Text>
+                    <Text style={styles.priceLabel}>USD</Text>
+                  </View>
+                </View>
+                
+                <Text style={styles.skillDescription} numberOfLines={2}>
+                  {skill.description}
+                </Text>
+                
+                <View style={styles.skillTags}>
+                  {skill.tags.slice(0, 3).map((tag, tagIndex) => (
+                    <Animated.View
+                      key={tag}
+                      style={[
+                        styles.tag,
+                        {
+                          transform: [
+                            {
+                              scale: pulseAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [1, 1.05],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </Animated.View>
+                  ))}
+                </View>
+                
+                <View style={styles.skillStats}>
+                  <View style={styles.statItem}>
+                    <Ionicons name="download-outline" size={14} color={COLORS.primary} />
+                    <Text style={styles.statText}>{skill.downloads}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Ionicons name="cube-outline" size={14} color={COLORS.primary} />
+                    <Text style={styles.statText}>{skill.datasetSize}GB</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Ionicons name="time-outline" size={14} color={COLORS.primary} />
+                    <Text style={styles.statText}>Updated {skill.updatedAt || 'recently'}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.skillRobotTypes}>
+                  <Text style={styles.robotTypesLabel}>Compatible with:</Text>
+                  <View style={styles.robotTypesBadges}>
+                    {skill.robotTypes.map(type => (
+                      <View key={type} style={styles.robotTypeBadge}>
+                        <Ionicons
+                          name={type === 'unitree_g1' ? 'hardware-chip-outline' : 'construct-outline'}
+                          size={12}
+                          color={COLORS.secondary}
+                        />
+                        <Text style={styles.robotTypeText}>
+                          {type.replace('_', ' ').replace('unitree g1', 'Unitree G1').replace('custom humanoid', 'Custom')}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </View>
+            </GlassCard>
+          </TouchableOpacity>
+        </Animated.View>
+      </SwipeableCard>
+    );
+  };
 
   const renderFilterModal = () => (
     <Modal
@@ -245,7 +479,7 @@ const MarketplaceScreen: React.FC = () => {
             >
               <Text style={styles.filterOptionText}>All</Text>
             </TouchableOpacity>
-            {(['unitree_g1', 'boston_dynamics', 'tesla_bot', 'custom'] as RobotType[]).map(type => (
+            {(['unitree_g1', 'custom_humanoid'] as RobotType[]).map(type => (
               <TouchableOpacity 
                 key={type}
                 style={[styles.filterOption, selectedRobotType === type && styles.filterOptionSelected]}
@@ -279,36 +513,177 @@ const MarketplaceScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <ScrollView>
-        <View style={styles.header}>
-          <Text style={styles.title}>Skills Marketplace</Text>
-          <Text style={styles.balance}>Balance: ${userBalance.toFixed(2)}</Text>
-        </View>
-
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search skills..."
-            onSubmitEditing={handleSearch}
+    <Animated.View 
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+          transform: [
+            { translateY: slideAnim },
+            { scale: scaleAnim },
+          ],
+        },
+      ]}
+    >
+      {/* Particle System Background */}
+      <View style={styles.particleContainer}>
+        {particles.map((particle, index) => (
+          <Animated.View
+            key={index}
+            style={[
+              styles.particle,
+              {
+                left: particle.x,
+                top: particle.y,
+                opacity: particle.opacity,
+                transform: [{ scale: particle.scale }],
+              },
+            ]}
           />
-          <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-            <Text style={styles.searchButtonText}>Search</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilters(true)}>
-            <Text style={styles.filterButtonText}>Filter</Text>
-          </TouchableOpacity>
+        ))}
+      </View>
+      
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadData(true)}
+            tintColor={COLORS.primary}
+            colors={[COLORS.primary]}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Enhanced Header */}
+        <View style={styles.headerContainer}>
+          <LinearGradient
+            colors={[COLORS.primary + '20', 'transparent']}
+            style={styles.headerGradient}
+          />
+          <View style={styles.header}>
+            <View style={styles.titleContainer}>
+              <Animated.Text 
+                style={[
+                  styles.title,
+                  {
+                    transform: [
+                      {
+                        translateY: floatingAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, -5],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                Skills Marketplace
+              </Animated.Text>
+              <Text style={styles.subtitle}>Discover & trade robot skills</Text>
+            </View>
+            <GlassCard style={styles.balanceCard} intensity={60}>
+              <Ionicons name="wallet-outline" size={20} color={COLORS.primary} />
+              <Text style={styles.balanceLabel}>Balance</Text>
+              <Text style={styles.balance}>${userBalance.toFixed(2)}</Text>
+            </GlassCard>
+          </View>
         </View>
 
+        {/* Enhanced Search and Controls */}
+        <View style={styles.searchContainer}>
+          <GlassCard style={styles.searchCard} intensity={40}>
+            <ValidatedTextInput
+              label=""
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search skills, categories, or creators..."
+              rules={[ValidationRules.maxLength(100)]}
+              style={styles.searchInputContainer}
+              inputStyle={styles.searchInput}
+              showSuccessIcon={false}
+              showErrorIcon={false}
+              onSubmitEditing={handleSearch}
+            />
+            <AdvancedButton
+              variant="primary"
+              size="medium"
+              onPress={handleSearch}
+              style={styles.searchButton}
+              effectType="ripple"
+              disabled={!!searchValidation.error}
+            >
+              <Ionicons name="search" size={18} color={COLORS.background} />
+            </AdvancedButton>
+          </GlassCard>
+          
+          <View style={styles.controlsRow}>
+            <AdvancedButton
+              variant="secondary"
+              size="small"
+              onPress={() => setShowFilters(true)}
+              style={styles.filterButton}
+              effectType="glow"
+            >
+              <Ionicons name="options-outline" size={16} color={COLORS.text} />
+              <Text style={styles.buttonText}>Filter</Text>
+            </AdvancedButton>
+            
+            <AdvancedButton
+              variant="secondary"
+              size="small"
+              onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+              style={styles.viewModeButton}
+              effectType="morph"
+            >
+              <Ionicons 
+                name={viewMode === 'grid' ? 'list-outline' : 'grid-outline'} 
+                size={16} 
+                color={COLORS.text} 
+              />
+            </AdvancedButton>
+            
+            <AdvancedButton
+              variant="secondary"
+              size="small"
+              onPress={() => {
+                const sortOptions = ['rating', 'price', 'downloads', 'recent'] as const;
+                const currentIndex = sortOptions.indexOf(sortBy);
+                const nextSort = sortOptions[(currentIndex + 1) % sortOptions.length];
+                setSortBy(nextSort);
+                setSkills(sortSkills(skills, nextSort));
+              }}
+              style={styles.sortButton}
+              effectType="liquid"
+            >
+              <Ionicons name="swap-vertical-outline" size={16} color={COLORS.text} />
+              <Text style={styles.buttonTextSmall}>{sortBy}</Text>
+            </AdvancedButton>
+          </View>
+        </View>
+
+        {/* Enhanced Action Section */}
         <View style={styles.actionSection}>
-          <TouchableOpacity style={styles.primaryButton} onPress={handleUploadSkill}>
+          <AdvancedButton
+            variant="primary"
+            size="large"
+            onPress={handleUploadSkill}
+            style={styles.primaryActionButton}
+            effectType="glow"
+          >
+            <Ionicons name="cloud-upload-outline" size={20} color={COLORS.background} />
             <Text style={styles.primaryButtonText}>Upload Skill</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton} onPress={handleMySkills}>
+          </AdvancedButton>
+          
+          <AdvancedButton
+            variant="secondary"
+            size="large"
+            onPress={handleMySkills}
+            style={styles.secondaryActionButton}
+            effectType="ripple"
+          >
+            <Ionicons name="library-outline" size={20} color={COLORS.text} />
             <Text style={styles.secondaryButtonText}>My Skills</Text>
-          </TouchableOpacity>
+          </AdvancedButton>
         </View>
 
         {categories.length > 0 && (
@@ -338,16 +713,58 @@ const MarketplaceScreen: React.FC = () => {
           </View>
         )}
 
+        {/* Enhanced Skills Section */}
         <View style={styles.skillsSection}>
-          <Text style={styles.sectionTitle}>
-            {selectedCategory ? `${selectedCategory} Skills` : 'Featured Skills'}
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              {selectedCategory ? `${selectedCategory} Skills` : 'Featured Skills'}
+            </Text>
+            <Text style={styles.resultCount}>
+              {loading ? 'Loading...' : `${skills.length} skill${skills.length !== 1 ? 's' : ''}`}
+            </Text>
+          </View>
+          
           {loading ? (
-            <ActivityIndicator size="large" color={COLORS.primary} style={styles.loading} />
+            <View style={styles.loadingContainer}>
+              <Animated.View
+                style={[
+                  styles.loadingSpinner,
+                  {
+                    transform: [
+                      {
+                        rotate: rotateAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '360deg'],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Ionicons name="refresh" size={40} color={COLORS.primary} />
+              </Animated.View>
+              <Text style={styles.loadingText}>Discovering amazing skills...</Text>
+            </View>
           ) : skills.length > 0 ? (
-            skills.map(renderSkillCard)
+            <FlatList
+              data={skills}
+              renderItem={({ item, index }) => renderSkillCard(item, index)}
+              keyExtractor={(item) => item.id}
+              numColumns={viewMode === 'grid' ? 2 : 1}
+              key={viewMode} // Force re-render when view mode changes
+              showsVerticalScrollIndicator={false}
+              ItemSeparatorComponent={() => <View style={{ height: SPACING.md }} />}
+              columnWrapperStyle={viewMode === 'grid' ? styles.gridRow : undefined}
+              scrollEnabled={false} // Disable since we're inside a ScrollView
+            />
           ) : (
-            <Text style={styles.noResults}>No skills found</Text>
+            <View style={styles.noResultsContainer}>
+              <Ionicons name="search-outline" size={60} color={COLORS.textSecondary} />
+              <Text style={styles.noResults}>No skills found</Text>
+              <Text style={styles.noResultsSubtext}>
+                Try adjusting your search terms or filters
+              </Text>
+            </View>
           )}
         </View>
       </ScrollView>
@@ -654,6 +1071,11 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.button,
     color: COLORS.background,
     textAlign: 'center',
+  },
+  sectionTitle: {
+    ...TYPOGRAPHY.h3,
+    color: COLORS.text,
+    fontWeight: '600',
   },
 });
 

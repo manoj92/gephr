@@ -66,3 +66,21 @@ __pycache__/
 # Database files
 *.db
 *.sqlite3
+
+# Serverless deployment artifacts
+.serverless/
+lambda-deployment.zip
+
+# AWS Lambda dependencies (should be installed via requirements.txt)
+boto3*
+botocore*
+dateutil/
+jmespath*
+mangum*
+python_dateutil*
+s3transfer*
+six.py
+six-*
+typing_extensions.py
+typing_extensions-*
+urllib3*

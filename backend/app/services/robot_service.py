@@ -1,10 +1,14 @@
 import asyncio
 import json
 import random
-from typing import Dict, Any, Optional
+import logging
+from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
-from app.models.robot import RobotConnection, RobotCommand
+from app.models.robot import RobotConnection, RobotCommand, Robot
 from app.core.websocket import websocket_manager
+from app.services.notification_service import notification_service
+
+logger = logging.getLogger(__name__)
 
 
 class RobotService:
@@ -12,28 +16,81 @@ class RobotService:
         self.active_connections: Dict[str, Dict] = {}
         self.command_queue: Dict[str, list] = {}
         
-    async def connect_robot(self, connection: RobotConnection) -> Optional[Dict[str, Any]]:
+        # Supported robot configurations
+        self.supported_robots = {
+            "unitree_g1": {
+                "name": "Unitree G1",
+                "manufacturer": "Unitree",
+                "joint_count": 23,
+                "max_payload": 2.0,  # kg
+                "battery_capacity": 90,  # Wh
+                "capabilities": ["bipedal_walking", "manipulation", "vision", "balance", "navigation"],
+                "default_port": 8080,
+                "control_frequency": 500,  # Hz
+                "communication_protocol": "unitree_sdk"
+            },
+            "custom_humanoid": {
+                "name": "Custom Humanoid",
+                "manufacturer": "Custom",
+                "joint_count": 25,
+                "max_payload": 3.0,  # kg
+                "battery_capacity": 120,  # Wh
+                "capabilities": ["bipedal_walking", "manipulation", "vision", "balance", "navigation", "speech"],
+                "default_port": 9090,
+                "control_frequency": 1000,  # Hz
+                "communication_protocol": "custom_api"
+            }
+        }
+    
+    def get_supported_robots(self) -> Dict[str, Any]:
+        """Get list of supported robot types"""
+        return {
+            "supported_robots": self.supported_robots,
+            "total_count": len(self.supported_robots)
+        }
+    
+    def get_robot_config(self, robot_type: str) -> Optional[Dict[str, Any]]:
+        """Get configuration for a specific robot type"""
+        return self.supported_robots.get(robot_type)
+    
+    def validate_robot_type(self, robot_type: str) -> bool:
+        """Validate if robot type is supported"""
+        return robot_type in self.supported_robots
+        
+    async def connect_robot(self, connection: RobotConnection, robot_type: str = "unitree_g1") -> Optional[Dict[str, Any]]:
         """
         Connect to a robot. In production, this would establish actual network connections.
-        For now, we simulate the connection process.
+        For now, we simulate the connection process with robot-specific configurations.
         """
         try:
+            # Validate robot type
+            if not self.validate_robot_type(robot_type):
+                raise Exception(f"Unsupported robot type: {robot_type}")
+            
+            robot_config = self.get_robot_config(robot_type)
+            
             # Simulate connection process
             await asyncio.sleep(0.5)  # Simulate connection delay
             
             # Mock connection result based on robot type
             if connection.robot_id not in self.active_connections:
-                # Simulate connection success/failure
-                if random.random() > 0.1:  # 90% success rate
+                # Simulate connection success/failure (higher success rate for supported robots)
+                success_rate = 0.95 if robot_type == "unitree_g1" else 0.85
+                
+                if random.random() < success_rate:
                     connection_info = {
                         "robot_id": connection.robot_id,
                         "connection_id": connection.id,
+                        "robot_type": robot_type,
+                        "robot_config": robot_config,
                         "status": "connected",
-                        "quality": random.uniform(0.7, 1.0),
-                        "latency": random.uniform(10, 50),
-                        "capabilities": ["manipulation", "navigation", "vision"],
-                        "joint_count": 20,
-                        "battery_level": random.uniform(0.3, 1.0)
+                        "quality": random.uniform(0.8, 1.0),
+                        "latency": random.uniform(5, 25) if robot_type == "unitree_g1" else random.uniform(10, 50),
+                        "capabilities": robot_config["capabilities"],
+                        "joint_count": robot_config["joint_count"],
+                        "battery_level": random.uniform(0.4, 1.0),
+                        "control_frequency": robot_config["control_frequency"],
+                        "communication_protocol": robot_config["communication_protocol"]
                     }
                     
                     self.active_connections[connection.robot_id] = connection_info
@@ -42,14 +99,32 @@ class RobotService:
                     # Start heartbeat task
                     asyncio.create_task(self._heartbeat_task(connection))
                     
+                    # Send connection notification
+                    await notification_service.send_robot_status_notification(
+                        user_id=connection.user_id,
+                        robot_name=robot_config["name"],
+                        status="connected",
+                        details={"robot_type": robot_type, "battery_level": connection_info["battery_level"]}
+                    )
+                    
+                    logger.info(f"Robot {connection.robot_id} ({robot_type}) connected successfully")
                     return connection_info
                 else:
-                    raise Exception("Robot connection timeout")
+                    raise Exception(f"Robot connection timeout for {robot_type}")
             else:
                 raise Exception("Robot already connected")
                 
         except Exception as e:
-            print(f"Robot connection failed: {str(e)}")
+            logger.error(f"Robot connection failed: {str(e)}")
+            
+            # Send error notification
+            await notification_service.send_robot_status_notification(
+                user_id=connection.user_id,
+                robot_name=f"Robot {connection.robot_id}",
+                status="error",
+                details={"error": str(e)}
+            )
+            
             return None
 
     async def disconnect_robot(self, connection: RobotConnection):
@@ -148,31 +223,87 @@ class RobotService:
             command.completed_at = datetime.utcnow()
 
     async def get_robot_state(self, connection: RobotConnection) -> Dict[str, Any]:
-        """Get current robot state"""
+        """Get current robot state with robot-specific configurations"""
         if connection.robot_id not in self.active_connections:
             raise Exception("Robot not connected")
         
-        # Generate mock robot state
-        return {
-            "position": {
-                "x": random.uniform(-1, 1),
-                "y": random.uniform(-1, 1), 
-                "z": random.uniform(0, 2)
-            },
-            "rotation": {
-                "x": 0,
-                "y": 0,
-                "z": random.uniform(-3.14, 3.14),
-                "w": 1
-            },
-            "joint_positions": [random.uniform(-1.57, 1.57) for _ in range(20)],
-            "joint_velocities": [random.uniform(-0.5, 0.5) for _ in range(20)],
-            "battery_level": random.uniform(0.3, 1.0),
-            "error_state": False,
-            "current_task": None,
-            "connection_quality": random.uniform(0.8, 1.0),
-            "timestamp": datetime.utcnow()
-        }
+        conn_info = self.active_connections[connection.robot_id]
+        robot_type = conn_info.get("robot_type", "unitree_g1")
+        robot_config = conn_info.get("robot_config", self.supported_robots["unitree_g1"])
+        joint_count = robot_config["joint_count"]
+        
+        # Generate robot-specific state
+        if robot_type == "unitree_g1":
+            # Unitree G1 specific state
+            state = {
+                "position": {
+                    "x": random.uniform(-0.5, 0.5),
+                    "y": random.uniform(-0.5, 0.5), 
+                    "z": random.uniform(0.8, 1.2)  # Standing height
+                },
+                "rotation": {
+                    "x": random.uniform(-0.1, 0.1),
+                    "y": random.uniform(-0.1, 0.1),
+                    "z": random.uniform(-3.14, 3.14),
+                    "w": random.uniform(0.9, 1.0)
+                },
+                "joint_positions": [random.uniform(-1.57, 1.57) for _ in range(joint_count)],
+                "joint_velocities": [random.uniform(-0.3, 0.3) for _ in range(joint_count)],
+                "joint_torques": [random.uniform(-10, 10) for _ in range(joint_count)],
+                "battery_level": random.uniform(0.3, 1.0),
+                "battery_voltage": random.uniform(20.0, 25.2),  # V
+                "motor_temperatures": [random.uniform(25, 55) for _ in range(joint_count)],  # Celsius
+                "imu_data": {
+                    "acceleration": [random.uniform(-1, 1) for _ in range(3)],
+                    "gyroscope": [random.uniform(-0.5, 0.5) for _ in range(3)],
+                    "orientation": [random.uniform(-0.1, 0.1) for _ in range(4)]
+                },
+                "foot_contact": [random.choice([True, False]) for _ in range(2)],
+                "walking_state": random.choice(["standing", "walking", "running", "balancing"]),
+                "error_state": False,
+                "current_task": None,
+                "connection_quality": random.uniform(0.8, 1.0),
+                "control_mode": random.choice(["position", "velocity", "torque", "hybrid"]),
+                "timestamp": datetime.utcnow()
+            }
+        else:  # custom_humanoid
+            # Custom humanoid state with additional features
+            state = {
+                "position": {
+                    "x": random.uniform(-1, 1),
+                    "y": random.uniform(-1, 1), 
+                    "z": random.uniform(0.7, 1.5)
+                },
+                "rotation": {
+                    "x": random.uniform(-0.2, 0.2),
+                    "y": random.uniform(-0.2, 0.2),
+                    "z": random.uniform(-3.14, 3.14),
+                    "w": random.uniform(0.8, 1.0)
+                },
+                "joint_positions": [random.uniform(-2.0, 2.0) for _ in range(joint_count)],
+                "joint_velocities": [random.uniform(-0.5, 0.5) for _ in range(joint_count)],
+                "joint_torques": [random.uniform(-15, 15) for _ in range(joint_count)],
+                "battery_level": random.uniform(0.3, 1.0),
+                "battery_voltage": random.uniform(22.0, 29.4),  # V
+                "motor_temperatures": [random.uniform(20, 60) for _ in range(joint_count)],
+                "imu_data": {
+                    "acceleration": [random.uniform(-2, 2) for _ in range(3)],
+                    "gyroscope": [random.uniform(-1, 1) for _ in range(3)],
+                    "orientation": [random.uniform(-0.2, 0.2) for _ in range(4)]
+                },
+                "foot_contact": [random.choice([True, False]) for _ in range(2)],
+                "hand_force": [random.uniform(0, 50) for _ in range(2)],  # N
+                "walking_state": random.choice(["standing", "walking", "running", "balancing", "dancing"]),
+                "speech_active": random.choice([True, False]),
+                "vision_active": random.choice([True, False]),
+                "error_state": False,
+                "current_task": None,
+                "connection_quality": random.uniform(0.8, 1.0),
+                "control_mode": random.choice(["position", "velocity", "torque", "hybrid", "compliance"]),
+                "timestamp": datetime.utcnow()
+            }
+        
+        return state
 
     async def _heartbeat_task(self, connection: RobotConnection):
         """Maintain connection heartbeat"""

@@ -1,341 +1,186 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from app.core.database import get_db
-from app.models.user import User
-from app.models.robot import Robot, RobotConnection, RobotCommand
-from app.schemas.robot import (
-    RobotCreate, RobotResponse, 
-    RobotConnectionCreate, RobotConnectionResponse,
-    RobotCommandCreate, RobotCommandResponse,
-    RobotState
-)
-from app.api.deps import get_current_user
+from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from pydantic import BaseModel, Field
 from app.services.robot_service import RobotService
-from app.core.websocket import websocket_manager
-from typing import List, Optional
-from datetime import datetime
+from app.core.deps import get_current_user
+from app.models.user import User
+from app.models.robot import RobotConnection, RobotCommand
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 robot_service = RobotService()
 
+class RobotConnectionRequest(BaseModel):
+    robot_id: str = Field(..., description="Unique robot identifier")
+    robot_type: str = Field(default="unitree_g1", description="Robot type")
+    connection_type: str = Field(default="wifi", description="Connection type")
+    ip_address: Optional[str] = Field(None, description="Robot IP address")
+    port: Optional[int] = Field(None, description="Robot port")
 
-@router.post("/", response_model=RobotResponse, status_code=status.HTTP_201_CREATED)
-async def create_robot(
-    robot_data: RobotCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    # Check if serial number already exists
-    if robot_data.serial_number:
-        result = await db.execute(
-            select(Robot).where(Robot.serial_number == robot_data.serial_number)
-        )
-        existing_robot = result.scalar_one_or_none()
-        
-        if existing_robot:
+class RobotCommandRequest(BaseModel):
+    robot_id: str = Field(..., description="Target robot ID")
+    command_type: str = Field(..., description="Command type")
+    parameters: Dict[str, Any] = Field(..., description="Command parameters")
+    priority: str = Field(default="medium", description="Command priority")
+    timeout_seconds: int = Field(default=30, description="Command timeout")
+
+@router.get("/supported")
+async def get_supported_robots():
+    """Get list of supported robot types"""
+    try:
+        result = robot_service.get_supported_robots()
+        return result
+    except Exception as e:
+        logger.error(f"Error getting supported robots: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/types/{robot_type}/config")
+async def get_robot_config(robot_type: str):
+    """Get configuration for a specific robot type"""
+    try:
+        config = robot_service.get_robot_config(robot_type)
+        if not config:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Robot with this serial number already exists"
+                status_code=404,
+                detail=f"Robot type '{robot_type}' not supported"
             )
-    
-    db_robot = Robot(**robot_data.dict())
-    db.add(db_robot)
-    await db.commit()
-    await db.refresh(db_robot)
-    
-    return db_robot
-
-
-@router.get("/", response_model=List[RobotResponse])
-async def get_robots(
-    skip: int = 0,
-    limit: int = 20,
-    robot_type: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
-):
-    query = select(Robot).where(Robot.is_active == True)
-    
-    if robot_type:
-        query = query.where(Robot.robot_type == robot_type)
-    
-    query = query.offset(skip).limit(limit).order_by(Robot.created_at.desc())
-    
-    result = await db.execute(query)
-    robots = result.scalars().all()
-    return robots
-
-
-@router.get("/{robot_id}", response_model=RobotResponse)
-async def get_robot(
-    robot_id: str,
-    db: AsyncSession = Depends(get_db)
-):
-    result = await db.execute(select(Robot).where(Robot.id == robot_id))
-    robot = result.scalar_one_or_none()
-    
-    if not robot:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Robot not found"
-        )
-    
-    return robot
-
-
-@router.post("/connect", response_model=RobotConnectionResponse, status_code=status.HTTP_201_CREATED)
-async def connect_to_robot(
-    connection_data: RobotConnectionCreate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    # Verify robot exists
-    result = await db.execute(select(Robot).where(Robot.id == connection_data.robot_id))
-    robot = result.scalar_one_or_none()
-    
-    if not robot:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Robot not found"
-        )
-    
-    # Check for existing active connection
-    result = await db.execute(
-        select(RobotConnection)
-        .where(RobotConnection.user_id == current_user.id)
-        .where(RobotConnection.robot_id == connection_data.robot_id)
-        .where(RobotConnection.status == "connected")
-    )
-    existing_connection = result.scalar_one_or_none()
-    
-    if existing_connection:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Already connected to this robot"
-        )
-    
-    # Create connection
-    db_connection = RobotConnection(
-        user_id=current_user.id,
-        robot_id=connection_data.robot_id,
-        connection_type=connection_data.connection_type,
-        ip_address=connection_data.ip_address,
-        port=connection_data.port,
-        bluetooth_id=connection_data.bluetooth_id,
-        status="connecting",
-        session_start=datetime.utcnow()
-    )
-    
-    db.add(db_connection)
-    await db.commit()
-    await db.refresh(db_connection)
-    
-    # Attempt actual robot connection
-    try:
-        connection_result = await robot_service.connect_robot(db_connection)
-        db_connection.status = "connected" if connection_result else "error"
-        db_connection.connection_quality = connection_result.get('quality', 0.0) if connection_result else 0.0
-        db_connection.latency_ms = connection_result.get('latency', 0.0) if connection_result else 0.0
-        db_connection.last_heartbeat = datetime.utcnow()
-        
-        await db.commit()
-        
-        # Notify via websocket
-        await websocket_manager.send_to_user(
-            {"type": "robot_connected", "robot_id": robot.id, "connection_id": db_connection.id},
-            current_user.id
-        )
-        
+        return {
+            "robot_type": robot_type,
+            "config": config
+        }
+    except HTTPException:
+        raise
     except Exception as e:
-        db_connection.status = "error"
-        db_connection.error_message = str(e)
-        await db.commit()
-        
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to connect to robot: {str(e)}"
-        )
-    
-    return db_connection
+        logger.error(f"Error getting robot config: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.get("/connections/", response_model=List[RobotConnectionResponse])
-async def get_user_robot_connections(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+@router.post("/connect")
+async def connect_robot(
+    request: RobotConnectionRequest,
+    current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(
-        select(RobotConnection)
-        .where(RobotConnection.user_id == current_user.id)
-        .order_by(RobotConnection.created_at.desc())
-    )
-    connections = result.scalars().all()
-    return connections
-
-
-@router.post("/connections/{connection_id}/disconnect")
-async def disconnect_robot(
-    connection_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    result = await db.execute(
-        select(RobotConnection)
-        .where(RobotConnection.id == connection_id)
-        .where(RobotConnection.user_id == current_user.id)
-    )
-    connection = result.scalar_one_or_none()
-    
-    if not connection:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Connection not found"
-        )
-    
-    # Disconnect robot
-    await robot_service.disconnect_robot(connection)
-    
-    # Update connection status
-    connection.status = "disconnected"
-    connection.session_end = datetime.utcnow()
-    await db.commit()
-    
-    # Notify via websocket
-    await websocket_manager.send_to_user(
-        {"type": "robot_disconnected", "robot_id": connection.robot_id, "connection_id": connection.id},
-        current_user.id
-    )
-    
-    return {"message": "Robot disconnected successfully"}
-
-
-@router.post("/commands", response_model=RobotCommandResponse, status_code=status.HTTP_201_CREATED)
-async def send_robot_command(
-    command_data: RobotCommandCreate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    # Verify active connection to robot
-    result = await db.execute(
-        select(RobotConnection)
-        .where(RobotConnection.user_id == current_user.id)
-        .where(RobotConnection.robot_id == command_data.robot_id)
-        .where(RobotConnection.status == "connected")
-    )
-    connection = result.scalar_one_or_none()
-    
-    if not connection:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No active connection to this robot"
-        )
-    
-    # Create command
-    db_command = RobotCommand(
-        robot_id=command_data.robot_id,
-        connection_id=connection.id,
-        command_type=command_data.command_type,
-        parameters=command_data.parameters,
-        priority=command_data.priority,
-        timeout_seconds=command_data.timeout_seconds
-    )
-    
-    db.add(db_command)
-    await db.commit()
-    await db.refresh(db_command)
-    
-    # Send command to robot
+    """Connect to a robot"""
     try:
-        await robot_service.send_command(db_command)
+        # Validate robot type
+        if not robot_service.validate_robot_type(request.robot_type):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported robot type: {request.robot_type}"
+            )
         
-        # Update command status
-        db_command.status = "executing"
-        db_command.started_at = datetime.utcnow()
-        await db.commit()
-        
-        # Notify via websocket
-        await websocket_manager.send_to_user(
-            {"type": "command_sent", "command_id": db_command.id, "robot_id": command_data.robot_id},
-            current_user.id
+        # Create connection object
+        connection = RobotConnection(
+            user_id=current_user.id,
+            robot_id=request.robot_id,
+            connection_type=request.connection_type,
+            ip_address=request.ip_address,
+            port=request.port
         )
         
+        # Attempt connection
+        result = await robot_service.connect_robot(connection, request.robot_type)
+        
+        if not result:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to connect to robot"
+            )
+        
+        return {
+            "success": True,
+            "connection_info": result,
+            "message": f"Successfully connected to {request.robot_type}"
+        }
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        db_command.status = "failed"
-        db_command.error_message = str(e)
-        await db.commit()
-        
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to send command: {str(e)}"
-        )
-    
-    return db_command
+        logger.error(f"Error connecting to robot: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.get("/commands", response_model=List[RobotCommandResponse])
-async def get_robot_commands(
-    robot_id: Optional[str] = None,
-    status_filter: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 20,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    # Get commands for user's robot connections
-    query = (
-        select(RobotCommand)
-        .join(RobotConnection)
-        .where(RobotConnection.user_id == current_user.id)
-    )
+@router.get("/commands/templates")
+async def get_command_templates():
+    """Get predefined command templates for different robot types"""
+    templates = {
+        "unitree_g1": {
+            "walk_forward": {
+                "command_type": "move",
+                "parameters": {
+                    "direction": "forward",
+                    "speed": 0.5,
+                    "distance": 1.0
+                },
+                "description": "Walk forward 1 meter at moderate speed"
+            },
+            "stand_up": {
+                "command_type": "posture",
+                "parameters": {
+                    "posture": "standing",
+                    "transition_time": 3.0
+                },
+                "description": "Stand up from current position"
+            },
+            "pick_object": {
+                "command_type": "pick",
+                "parameters": {
+                    "target_position": {"x": 0.3, "y": 0.0, "z": 0.8},
+                    "grasp_force": 0.5
+                },
+                "description": "Pick up object at specified position"
+            },
+            "turn_left": {
+                "command_type": "rotate",
+                "parameters": {
+                    "angle": 90,
+                    "angular_velocity": 30
+                },
+                "description": "Turn left 90 degrees"
+            }
+        },
+        "custom_humanoid": {
+            "walk_forward": {
+                "command_type": "move",
+                "parameters": {
+                    "direction": "forward",
+                    "speed": 0.8,
+                    "distance": 1.5,
+                    "gait_type": "dynamic"
+                },
+                "description": "Walk forward with dynamic gait"
+            },
+            "dance_move": {
+                "command_type": "custom",
+                "parameters": {
+                    "action": "dance",
+                    "dance_type": "wave",
+                    "duration": 10.0
+                },
+                "description": "Perform wave dance for 10 seconds"
+            },
+            "speak": {
+                "command_type": "speak",
+                "parameters": {
+                    "text": "Hello, I am a humanoid robot!",
+                    "language": "en",
+                    "emotion": "friendly"
+                },
+                "description": "Speak a greeting message"
+            },
+            "precision_grasp": {
+                "command_type": "pick",
+                "parameters": {
+                    "target_position": {"x": 0.25, "y": 0.0, "z": 0.9},
+                    "grasp_type": "precision",
+                    "approach_vector": {"x": 0, "y": 0, "z": -1}
+                },
+                "description": "Precision grasp of small object"
+            }
+        }
+    }
     
-    if robot_id:
-        query = query.where(RobotCommand.robot_id == robot_id)
-    
-    if status_filter:
-        query = query.where(RobotCommand.status == status_filter)
-    
-    query = query.offset(skip).limit(limit).order_by(RobotCommand.created_at.desc())
-    
-    result = await db.execute(query)
-    commands = result.scalars().all()
-    return commands
-
-
-@router.get("/connections/{connection_id}/state")
-async def get_robot_state(
-    connection_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    result = await db.execute(
-        select(RobotConnection)
-        .where(RobotConnection.id == connection_id)
-        .where(RobotConnection.user_id == current_user.id)
-    )
-    connection = result.scalar_one_or_none()
-    
-    if not connection:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Connection not found"
-        )
-    
-    if connection.status != "connected":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Robot is not connected"
-        )
-    
-    # Get current robot state
-    robot_state = await robot_service.get_robot_state(connection)
-    
-    return RobotState(
-        position=connection.current_position or {"x": 0, "y": 0, "z": 0},
-        rotation=connection.current_rotation or {"x": 0, "y": 0, "z": 0, "w": 1},
-        joint_positions=connection.joint_positions or [],
-        joint_velocities=connection.joint_velocities or [],
-        battery_level=connection.current_battery_level or 0.0,
-        error_state=connection.error_state,
-        current_task=connection.current_task,
-        connection_quality=connection.connection_quality,
-        timestamp=datetime.utcnow()
-    )
+    return {
+        "templates": templates,
+        "supported_robot_types": list(templates.keys())
+    }
