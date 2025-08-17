@@ -7,7 +7,7 @@ import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import EnhancedHomeScreen from '../screens/EnhancedHomeScreen';
 import EnhancedRecordingScreen from '../screens/EnhancedRecordingScreen';
 import EnhancedMarketplaceScreen from '../screens/EnhancedMarketplaceScreen';
-import MappingScreen from '../screens/MappingScreen';
+import Enhanced3DMapScreen from '../screens/Enhanced3DMapScreen';
 import EnhancedRobotScreen from '../screens/EnhancedRobotScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
@@ -56,7 +56,7 @@ const AppNavigator: React.FC = () => {
       />
       <Tab.Screen 
         name="Map" 
-        component={MappingScreen}
+        component={Enhanced3DMapScreen}
         options={{
           tabBarLabel: 'Map',
           tabBarIcon: ({ color, size }) => (

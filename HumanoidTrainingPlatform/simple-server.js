@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 8889;
-const WEB_BUILD_DIR = './web-build';
+const WEB_BUILD_DIR = './dist';
 
 const mimeTypes = {
   '.html': 'text/html',

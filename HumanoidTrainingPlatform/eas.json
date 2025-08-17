@@ -16,7 +16,7 @@
       "distribution": "internal",
       "env": {
         "NODE_ENV": "staging",
-        "API_BASE_URL": "https://gephrplatform-918p31ego-manojs-projects-7f68a9f9.vercel.app"
+        "API_BASE_URL": "http://192.168.68.106:8001"
       },
       "ios": {
         "simulator": true,

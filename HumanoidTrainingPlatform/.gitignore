@@ -7,16 +7,18 @@ node_modules/
 .expo/
 dist/
 web-build/
-expo-env.d.ts
 
 # Native
 .kotlin/
 *.orig.*
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
 *.mobileprovision
+debug.keystore
+gephr-upload-key.keystore
 
 # Metro
 .metro-health-check*
