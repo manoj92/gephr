@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     
     # Database
-    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/humanoid_training"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./humanoid_training.db")
     
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "")
@@ -40,10 +40,18 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379"
     
     # AWS S3 (optional)
-    AWS_ACCESS_KEY_ID: Optional[str] = None
-    AWS_SECRET_ACCESS_KEY: Optional[str] = None
-    AWS_REGION: str = "us-east-1"
-    S3_BUCKET: Optional[str] = None
+    USE_S3: bool = os.getenv("USE_S3", "false").lower() == "true"
+    AWS_ACCESS_KEY_ID: Optional[str] = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY: Optional[str] = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
+    AWS_S3_BUCKET: Optional[str] = os.getenv("AWS_S3_BUCKET")
+    
+    # NVIDIA GR00T Configuration
+    NGC_API_KEY: Optional[str] = os.getenv("NGC_API_KEY")
+    NGC_ORG: str = os.getenv("NGC_ORG", "nvidia")
+    NGC_TEAM: str = os.getenv("NGC_TEAM", "no-team")
+    GROOT_TRAINING_ENDPOINT: str = os.getenv("GROOT_TRAINING_ENDPOINT", "https://api.nvcf.nvidia.com/v1")
+    GROOT_SIMULATION_ENDPOINT: str = os.getenv("GROOT_SIMULATION_ENDPOINT", "https://omniverse-api.nvidia.com")
     
     # File Upload
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
@@ -62,6 +70,9 @@ class Settings(BaseSettings):
     MIN_SKILL_PRICE: float = 0.01
     MAX_SKILL_PRICE: float = 1000.0
     MARKETPLACE_FEE_PERCENTAGE: float = 0.05  # 5%
+    
+    # Logging
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     
     class Config:
         env_file = ".env"
