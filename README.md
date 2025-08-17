@@ -10,7 +10,7 @@ The Humanoid Training Platform enables developers to create high-quality trainin
 
 - **Real-time Hand Tracking**: Process camera feeds to detect hand poses and gestures with <50ms latency
 - **LeRobot Integration**: Generate training datasets compatible with LeRobot format
-- **Multi-Robot Support**: Connect to Unitree G1, Boston Dynamics, Tesla Bot, and custom robots
+- **Multi-Robot Support**: Connect to Unitree G1 and custom humanoid robots
 - **Skills Marketplace**: Share and monetize robot behaviors and training datasets
 - **3D Visualization**: Map environments and visualize robot movements in real-time
 - **Cross-Platform**: iOS, Android, and web support
