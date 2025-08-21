@@ -935,7 +935,7 @@ const ProfileScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </Animated.View>
   );
 };
 

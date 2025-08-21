@@ -769,7 +769,7 @@ const MarketplaceScreen: React.FC = () => {
         </View>
       </ScrollView>
       {renderFilterModal()}
-    </View>
+    </Animated.View>
   );
 };
 

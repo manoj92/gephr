@@ -304,8 +304,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 - GitHub Issues: [Report bugs or request features](https://github.com/gephrplatform/humanoid-training-platform/issues)
-- Email: support@humanoidplatform.com
-- Discord: Join our community for discussions
 
 ## Acknowledgments
 

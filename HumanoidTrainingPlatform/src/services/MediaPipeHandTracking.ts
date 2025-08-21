@@ -1,7 +1,7 @@
 import { Camera } from 'expo-camera';
-import * as tf from '@tensorflow/tfjs';
-import '@tensorflow/tfjs-react-native';
-import '@tensorflow/tfjs-platform-react-native';
+// import * as tf from '@tensorflow/tfjs';
+// import '@tensorflow/tfjs-react-native';
+// import '@tensorflow/tfjs-platform-react-native';
 import { HandPose, HandKeypoint, LerobotAction, LerobotObservation, LerobotDataPoint } from '../types';
 import { Platform } from 'react-native';
 
@@ -30,15 +30,13 @@ export class MediaPipeHandTrackingService {
 
   async initialize(): Promise<void> {
     try {
-      await tf.ready();
-      
-      // Load hand pose detection model
-      const handpose = await tf.loadGraphModel(
-        'https://tfhub.dev/mediapipe/tfjs-model/handpose_3d/1/default/1'
-      );
-      
-      this.model = handpose;
+      // Mock initialization for now (TensorFlow.js disabled)
+      console.log('Initializing MediaPipe hand tracking (mock mode)...');
       this.isInitialized = true;
+      
+      // Simulate some delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('MediaPipe initialized successfully');
     } catch (error) {
       console.error('Failed to initialize MediaPipe:', error);
       throw error;
@@ -46,60 +44,42 @@ export class MediaPipeHandTrackingService {
   }
 
   async processFrame(imageData: any): Promise<HandPose[]> {
-    if (!this.isInitialized || !this.model) {
+    if (!this.isInitialized) {
       throw new Error('MediaPipe not initialized');
     }
 
     try {
-      // Convert image data to tensor
-      const imageTensor = tf.browser.fromPixels(imageData);
-      const resized = tf.image.resizeBilinear(imageTensor, [256, 256]);
-      const normalized = resized.div(255.0);
-      const batched = normalized.expandDims(0);
+      // Mock hand detection - return simulated hand poses
+      const mockHands: HandPose[] = [
+        {
+          handedness: 'Right',
+          keypoints: this.generateMockKeypoints(),
+          score: 0.85
+        }
+      ];
 
-      // Run inference
-      const predictions = await this.model.predict(batched);
-      
-      // Process predictions
-      const hands = await this.extractHands(predictions);
-      
-      // Clean up tensors
-      imageTensor.dispose();
-      resized.dispose();
-      normalized.dispose();
-      batched.dispose();
-      predictions.dispose();
-
-      // Convert to HandPose format
-      return hands.map(hand => this.convertToHandPose(hand));
+      return mockHands;
     } catch (error) {
       console.error('Frame processing error:', error);
       return [];
     }
   }
 
-  private async extractHands(predictions: any): Promise<MediaPipeHand[]> {
-    const hands: MediaPipeHand[] = [];
+  private generateMockKeypoints(): HandKeypoint[] {
+    // Generate 21 hand keypoints (MediaPipe standard)
+    const keypoints: HandKeypoint[] = [];
     
-    try {
-      const handedness = await predictions.handedness.array();
-      const landmarks = await predictions.landmarks.array();
-      const scores = await predictions.scores.array();
-
-      for (let i = 0; i < handedness[0].length; i++) {
-        if (scores[0][i] > 0.5) {
-          hands.push({
-            handedness: handedness[0][i] > 0.5 ? 'Right' : 'Left',
-            landmarks: this.reshapeLandmarks(landmarks[0][i]),
-            score: scores[0][i]
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Hand extraction error:', error);
+    for (let i = 0; i < 21; i++) {
+      keypoints.push({
+        x: Math.random() * 640, // Mock x coordinate
+        y: Math.random() * 480, // Mock y coordinate
+        z: Math.random() * 0.1, // Mock z coordinate
+        name: `keypoint_${i}`,
+        score: 0.8 + Math.random() * 0.2
+      });
     }
-
-    return hands;
+    
+    return keypoints;
   }
 
   private reshapeLandmarks(flatLandmarks: number[]): HandLandmark[] {
@@ -405,11 +385,33 @@ export class MediaPipeHandTrackingService {
     return JSON.stringify(dataset, null, 2);
   }
 
-  dispose(): void {
-    if (this.model) {
-      this.model.dispose();
-      this.model = null;
+  startRecording(): void {
+    this.isRecording = true;
+    this.sessionStartTime = Date.now();
+    this.recordingSession = [];
+    console.log('Recording session started');
+  }
+
+  stopRecording(): LerobotDataPoint[] {
+    this.isRecording = false;
+    console.log(`Recording session stopped. Captured ${this.recordingSession.length} data points`);
+    return [...this.recordingSession];
+  }
+
+  // Aliases for compatibility
+  async startTracking(): Promise<void> {
+    if (!this.isInitialized) {
+      await this.initialize();
     }
+    this.startRecording();
+  }
+
+  async stopTracking(): Promise<LerobotDataPoint[]> {
+    return this.stopRecording();
+  }
+
+  dispose(): void {
+    // Remove TensorFlow model disposal since we're not using it
     this.isInitialized = false;
     this.frameBuffer = [];
     this.recordingSession = [];
@@ -417,3 +419,4 @@ export class MediaPipeHandTrackingService {
 }
 
 export const mediaPipeHandTracking = new MediaPipeHandTrackingService();
+export const handTrackingService = mediaPipeHandTracking; // Alias for compatibility
