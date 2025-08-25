@@ -1,114 +1,206 @@
 import { Camera } from 'expo-camera';
-// import * as tf from '@tensorflow/tfjs';
-// import '@tensorflow/tfjs-react-native';
-// import '@tensorflow/tfjs-platform-react-native';
 import { HandPose, HandKeypoint, LerobotAction, LerobotObservation, LerobotDataPoint } from '../types';
 import { Platform } from 'react-native';
 
-interface HandLandmark {
-  x: number;
-  y: number;
-  z: number;
-  visibility?: number;
+// MediaPipe types (mocked for React Native)
+interface Results {
+  multiHandLandmarks?: Array<Array<{ x: number; y: number; z: number }>>;
+  multiHandedness?: Array<{ label: string; score: number }>;
+}
+
+interface Hands {
+  setOptions: (options: any) => void;
+  onResults: (callback: (results: Results) => void) => void;
+  send: (input: any) => Promise<void>;
 }
 
 interface MediaPipeHand {
-  landmarks: HandLandmark[];
-  handedness: 'Left' | 'Right';
+  handedness: string;
+  landmarks: Array<{ x: number; y: number; z: number }>;
   score: number;
 }
 
 export class MediaPipeHandTrackingService {
-  private model: any = null;
+  private hands: Hands | null = null;
   private isInitialized = false;
-  private frameBuffer: any[] = [];
+  private frameBuffer: Array<{ timestamp: number; hands: HandPose[] }> = [];
   private lastActionTime = 0;
-  private actionThreshold = 500; // ms between actions
+  private actionThreshold = 100; // ms between actions
   private recordingSession: LerobotDataPoint[] = [];
   private isRecording = false;
   private sessionStartTime = 0;
 
   async initialize(): Promise<void> {
     try {
-      // Mock initialization for now (TensorFlow.js disabled)
-      console.log('Initializing MediaPipe hand tracking (mock mode)...');
-      this.isInitialized = true;
+      // Mock MediaPipe initialization for React Native
+      console.log('Initializing mock hand tracking service...');
       
-      // Simulate some delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('MediaPipe initialized successfully');
+      // Create mock hands object
+      this.hands = {
+        setOptions: (options: any) => {
+          console.log('Hand tracking options set:', options);
+        },
+        onResults: (callback: (results: Results) => void) => {
+          // Store callback for later use
+          this.onResultsCallback = callback;
+        },
+        send: async (input: any) => {
+          // Process mock frame
+          await this.processMockFrame();
+        }
+      };
+
+      this.hands.setOptions({
+        maxNumHands: 2,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.5
+      });
+
+      this.hands.onResults(this.onResults.bind(this));
+      
+      this.isInitialized = true;
+      console.log('Mock hand tracking initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize MediaPipe:', error);
-      throw error;
+      console.error('Failed to initialize hand tracking:', error);
+      this.isInitialized = false;
+    }
+  }
+
+  private onResultsCallback?: (results: Results) => void;
+
+  private async processMockFrame(): Promise<void> {
+    // Generate mock hand data
+    const mockResults: Results = {
+      multiHandLandmarks: [
+        Array.from({ length: 21 }, (_, i) => ({
+          x: 0.5 + Math.sin(Date.now() / 1000 + i) * 0.2,
+          y: 0.5 + Math.cos(Date.now() / 1000 + i) * 0.2,
+          z: Math.random() * 0.1
+        }))
+      ],
+      multiHandedness: [
+        { label: 'Right', score: 0.95 }
+      ]
+    };
+
+    if (this.onResultsCallback) {
+      this.onResultsCallback(mockResults);
+    }
+  }
+
+  private onResults(results: Results): void {
+    const hands: HandPose[] = [];
+    
+    if (results.multiHandLandmarks && results.multiHandedness) {
+      for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+        const landmarks = results.multiHandLandmarks[i];
+        const handedness = results.multiHandedness[i];
+        
+        const keypoints: HandKeypoint[] = landmarks.map((landmark, index) => ({
+          x: landmark.x,
+          y: landmark.y,
+          z: landmark.z,
+          name: this.getLandmarkName(index),
+          score: handedness.score
+        }));
+
+        hands.push({
+          handedness: handedness.label.toLowerCase() as 'left' | 'right',
+          keypoints,
+          score: handedness.score
+        });
+      }
+    }
+
+    // Store in frame buffer
+    this.frameBuffer.push({
+      timestamp: Date.now(),
+      hands
+    });
+
+    // Keep buffer size manageable
+    if (this.frameBuffer.length > 30) {
+      this.frameBuffer.shift();
+    }
+
+    // Process for recording if active
+    if (this.isRecording) {
+      this.processFrameForRecording(hands);
+    }
+  }
+
+  private processFrameForRecording(hands: HandPose[]): void {
+    const currentTime = Date.now();
+    const relativeTime = currentTime - this.sessionStartTime;
+
+    // Classify action from hand poses
+    const action = this.classifyAction(hands);
+    
+    if (action) {
+      // Create LeRobot observation
+      const observation: LerobotObservation = {
+        image: null, // Camera frame would go here
+        state: {
+          hand_positions: hands.map(hand => ({
+            position: this.getHandPosition(hand),
+            orientation: this.getHandOrientation(hand),
+            gesture: this.detectGesture([hand])
+          }))
+        },
+        timestamp: relativeTime
+      };
+
+      // Create LeRobot data point
+      const dataPoint: LerobotDataPoint = {
+        observation,
+        action,
+        reward: this.calculateReward(action, hands),
+        done: false,
+        info: {
+          frame_id: this.recordingSession.length,
+          confidence: Math.max(...hands.map(h => h.score)),
+          num_hands: hands.length
+        },
+        timestamp: relativeTime,
+        metadata: {
+          device_info: {
+            platform: Platform.OS,
+            model: 'unknown'
+          },
+          recording_session: Date.now().toString(),
+          hand_tracking_version: '1.0.0'
+        }
+      };
+
+      this.recordingSession.push(dataPoint);
     }
   }
 
   async processFrame(imageData: any): Promise<HandPose[]> {
     if (!this.isInitialized) {
-      throw new Error('MediaPipe not initialized');
+      console.warn('Hand tracking not initialized, returning empty results');
+      return [];
+    }
+
+    if (!this.hands) {
+      return [];
     }
 
     try {
-      // Mock hand detection - return simulated hand poses
-      const mockHands: HandPose[] = [
-        {
-          handedness: 'Right',
-          keypoints: this.generateMockKeypoints(),
-          score: 0.85
-        }
-      ];
+      // In React Native, we use mock processing
+      await this.hands.send(imageData);
 
-      return mockHands;
+      // Return the most recent hand poses from frame buffer
+      if (this.frameBuffer.length > 0) {
+        return this.frameBuffer[this.frameBuffer.length - 1].hands;
+      }
+
+      return [];
     } catch (error) {
       console.error('Frame processing error:', error);
       return [];
     }
-  }
-
-  private generateMockKeypoints(): HandKeypoint[] {
-    // Generate 21 hand keypoints (MediaPipe standard)
-    const keypoints: HandKeypoint[] = [];
-    
-    for (let i = 0; i < 21; i++) {
-      keypoints.push({
-        x: Math.random() * 640, // Mock x coordinate
-        y: Math.random() * 480, // Mock y coordinate
-        z: Math.random() * 0.1, // Mock z coordinate
-        name: `keypoint_${i}`,
-        score: 0.8 + Math.random() * 0.2
-      });
-    }
-    
-    return keypoints;
-  }
-
-  private reshapeLandmarks(flatLandmarks: number[]): HandLandmark[] {
-    const landmarks: HandLandmark[] = [];
-    for (let i = 0; i < flatLandmarks.length; i += 3) {
-      landmarks.push({
-        x: flatLandmarks[i],
-        y: flatLandmarks[i + 1],
-        z: flatLandmarks[i + 2],
-        visibility: 1.0
-      });
-    }
-    return landmarks;
-  }
-
-  private convertToHandPose(mediaPipeHand: MediaPipeHand): HandPose {
-    const keypoints: HandKeypoint[] = mediaPipeHand.landmarks.map((landmark, index) => ({
-      x: landmark.x,
-      y: landmark.y,
-      z: landmark.z,
-      confidence: landmark.visibility || 1.0,
-      name: this.getLandmarkName(index)
-    }));
-
-    return {
-      keypoints,
-      confidence: mediaPipeHand.score,
-      handedness: mediaPipeHand.handedness.toLowerCase() as 'left' | 'right'
-    };
   }
 
   private getLandmarkName(index: number): string {
@@ -123,42 +215,63 @@ export class MediaPipeHandTrackingService {
     return landmarkNames[index] || `landmark_${index}`;
   }
 
+  private getHandPosition(hand: HandPose): { x: number; y: number; z: number } {
+    // Use wrist position as hand center
+    const wrist = hand.keypoints.find(k => k.name === 'wrist');
+    if (wrist) {
+      return { x: wrist.x, y: wrist.y, z: wrist.z };
+    }
+    // Fallback: average all keypoints
+    const avgX = hand.keypoints.reduce((sum, k) => sum + k.x, 0) / hand.keypoints.length;
+    const avgY = hand.keypoints.reduce((sum, k) => sum + k.y, 0) / hand.keypoints.length;
+    const avgZ = hand.keypoints.reduce((sum, k) => sum + k.z, 0) / hand.keypoints.length;
+    return { x: avgX, y: avgY, z: avgZ };
+  }
+
+  private getHandOrientation(hand: HandPose): { roll: number; pitch: number; yaw: number } {
+    // Calculate hand orientation using wrist and middle finger MCP
+    const wrist = hand.keypoints.find(k => k.name === 'wrist');
+    const middleMcp = hand.keypoints.find(k => k.name === 'middle_mcp');
+    
+    if (wrist && middleMcp) {
+      const dx = middleMcp.x - wrist.x;
+      const dy = middleMcp.y - wrist.y;
+      const dz = middleMcp.z - wrist.z;
+      
+      const yaw = Math.atan2(dy, dx);
+      const pitch = Math.atan2(dz, Math.sqrt(dx * dx + dy * dy));
+      const roll = 0; // Simplified - would need more landmarks for accurate roll
+      
+      return { roll, pitch, yaw };
+    }
+    
+    return { roll: 0, pitch: 0, yaw: 0 };
+  }
+
   detectGesture(hands: HandPose[]): string {
     if (hands.length === 0) return 'none';
 
     const primaryHand = hands[0];
     const fingers = this.getFingerStates(primaryHand);
     
-    // Detect pinch gesture
+    // Detect gestures based on finger states
     if (this.isPinching(primaryHand)) {
       return 'pinch';
-    }
-
-    // Detect pointing gesture
-    if (fingers.index && !fingers.middle && !fingers.ring && !fingers.pinky) {
+    } else if (fingers.thumb && fingers.index && !fingers.middle && !fingers.ring && !fingers.pinky) {
       return 'point';
-    }
-
-    // Detect open palm
-    if (fingers.thumb && fingers.index && fingers.middle && fingers.ring && fingers.pinky) {
+    } else if (fingers.thumb && fingers.index && fingers.middle && fingers.ring && fingers.pinky) {
       return 'open';
-    }
-
-    // Detect closed fist
-    if (!fingers.thumb && !fingers.index && !fingers.middle && !fingers.ring && !fingers.pinky) {
-      return 'close';
-    }
-
-    // Detect peace sign
-    if (fingers.index && fingers.middle && !fingers.ring && !fingers.pinky) {
+    } else if (!fingers.thumb && !fingers.index && !fingers.middle && !fingers.ring && !fingers.pinky) {
+      return 'fist';
+    } else if (fingers.index && fingers.middle && !fingers.ring && !fingers.pinky) {
       return 'peace';
     }
 
     return 'unknown';
   }
 
-  private getFingerStates(hand: HandPose): Record<string, boolean> {
-    const states: Record<string, boolean> = {
+  private getFingerStates(hand: HandPose): { [key: string]: boolean } {
+    const states = {
       thumb: false,
       index: false,
       middle: false,
@@ -166,43 +279,39 @@ export class MediaPipeHandTrackingService {
       pinky: false
     };
 
-    // Check if fingers are extended based on keypoint positions
-    const wrist = hand.keypoints.find(k => k.name === 'wrist');
-    if (!wrist) return states;
-
-    // Thumb
+    // Thumb finger (different logic due to thumb orientation)
     const thumbTip = hand.keypoints.find(k => k.name === 'thumb_tip');
-    const thumbMcp = hand.keypoints.find(k => k.name === 'thumb_mcp');
-    if (thumbTip && thumbMcp) {
-      states.thumb = Math.abs(thumbTip.y - wrist.y) > Math.abs(thumbMcp.y - wrist.y);
+    const thumbIp = hand.keypoints.find(k => k.name === 'thumb_ip');
+    if (thumbTip && thumbIp) {
+      states.thumb = thumbTip.x > thumbIp.x; // Simplified thumb detection
     }
 
     // Index finger
     const indexTip = hand.keypoints.find(k => k.name === 'index_tip');
-    const indexMcp = hand.keypoints.find(k => k.name === 'index_mcp');
-    if (indexTip && indexMcp) {
-      states.index = indexTip.y < indexMcp.y;
+    const indexPip = hand.keypoints.find(k => k.name === 'index_pip');
+    if (indexTip && indexPip) {
+      states.index = indexTip.y < indexPip.y;
     }
 
     // Middle finger
     const middleTip = hand.keypoints.find(k => k.name === 'middle_tip');
-    const middleMcp = hand.keypoints.find(k => k.name === 'middle_mcp');
-    if (middleTip && middleMcp) {
-      states.middle = middleTip.y < middleMcp.y;
+    const middlePip = hand.keypoints.find(k => k.name === 'middle_pip');
+    if (middleTip && middlePip) {
+      states.middle = middleTip.y < middlePip.y;
     }
 
     // Ring finger
     const ringTip = hand.keypoints.find(k => k.name === 'ring_tip');
-    const ringMcp = hand.keypoints.find(k => k.name === 'ring_mcp');
-    if (ringTip && ringMcp) {
-      states.ring = ringTip.y < ringMcp.y;
+    const ringPip = hand.keypoints.find(k => k.name === 'ring_pip');
+    if (ringTip && ringPip) {
+      states.ring = ringTip.y < ringPip.y;
     }
 
     // Pinky finger
     const pinkyTip = hand.keypoints.find(k => k.name === 'pinky_tip');
-    const pinkyMcp = hand.keypoints.find(k => k.name === 'pinky_mcp');
-    if (pinkyTip && pinkyMcp) {
-      states.pinky = pinkyTip.y < pinkyMcp.y;
+    const pinkyPip = hand.keypoints.find(k => k.name === 'pinky_pip');
+    if (pinkyTip && pinkyPip) {
+      states.pinky = pinkyTip.y < pinkyPip.y;
     }
 
     return states;
@@ -241,7 +350,7 @@ export class MediaPipeHandTrackingService {
             approach_speed: 0.5
           },
           timestamp: currentTime,
-          confidence: hands[0].confidence
+          confidence: hands[0]?.score || 0
         };
         break;
       case 'open':
@@ -249,32 +358,37 @@ export class MediaPipeHandTrackingService {
           type: 'place',
           parameters: {
             release_speed: 0.3,
-            placement_precision: 0.8
+            retract_distance: 0.1
           },
           timestamp: currentTime,
-          confidence: hands[0].confidence
+          confidence: hands[0]?.score || 0
         };
         break;
       case 'point':
         action = {
           type: 'move',
           parameters: {
-            direction: this.getPointingDirection(hands[0]),
-            speed: 0.6
+            target_position: this.getHandPosition(hands[0]),
+            movement_speed: 0.4
           },
           timestamp: currentTime,
-          confidence: hands[0].confidence
+          confidence: hands[0]?.score || 0
         };
         break;
-      case 'close':
+      case 'fist':
         action = {
-          type: 'close',
+          type: 'rotate',
           parameters: {
-            grip_strength: 0.9
+            rotation_axis: 'z',
+            angle: 0.5,
+            rotation_speed: 0.2
           },
           timestamp: currentTime,
-          confidence: hands[0].confidence
+          confidence: hands[0]?.score || 0
         };
+        break;
+      default:
+        // No action for unknown gestures
         break;
     }
 
@@ -285,104 +399,13 @@ export class MediaPipeHandTrackingService {
     return action;
   }
 
-  private getPointingDirection(hand: HandPose): [number, number, number] {
-    const indexTip = hand.keypoints.find(k => k.name === 'index_tip');
-    const indexMcp = hand.keypoints.find(k => k.name === 'index_mcp');
+  private calculateReward(action: LerobotAction, hands: HandPose[]): number {
+    // Simple reward calculation based on confidence and hand stability
+    const baseReward = 0.1;
+    const confidenceBonus = Math.max(...hands.map(h => h.score)) * 0.5;
+    const stabilityBonus = hands.length >= 1 ? 0.2 : 0;
     
-    if (!indexTip || !indexMcp) return [0, 0, 1];
-
-    const direction: [number, number, number] = [
-      indexTip.x - indexMcp.x,
-      indexTip.y - indexMcp.y,
-      indexTip.z - indexMcp.z
-    ];
-
-    // Normalize the direction vector
-    const magnitude = Math.sqrt(
-      direction[0] ** 2 + direction[1] ** 2 + direction[2] ** 2
-    );
-
-    if (magnitude > 0) {
-      direction[0] /= magnitude;
-      direction[1] /= magnitude;
-      direction[2] /= magnitude;
-    }
-
-    return direction;
-  }
-
-  startRecording(): void {
-    this.isRecording = true;
-    this.recordingSession = [];
-    this.sessionStartTime = Date.now();
-  }
-
-  stopRecording(): LerobotDataPoint[] {
-    this.isRecording = false;
-    const session = [...this.recordingSession];
-    this.recordingSession = [];
-    return session;
-  }
-
-  addToRecording(hands: HandPose[], action: LerobotAction | null): void {
-    if (!this.isRecording) return;
-
-    const observation: LerobotObservation = {
-      timestamp: Date.now(),
-      hand_poses: hands,
-      camera_frame: {
-        width: 1920,
-        height: 1080,
-        format: 'rgb',
-        data: new ArrayBuffer(0) // Placeholder
-      }
-    };
-
-    const dataPoint: LerobotDataPoint = {
-      observation,
-      action: action || {
-        type: 'idle',
-        parameters: {},
-        timestamp: Date.now(),
-        confidence: 1.0
-      },
-      metadata: {
-        session_id: `session_${this.sessionStartTime}`,
-        device_type: 'mobile',
-        recording_quality: 'high',
-        environment: 'indoor'
-      }
-    };
-
-    this.recordingSession.push(dataPoint);
-  }
-
-  exportLerobotDataset(): string {
-    const dataset = {
-      version: '1.0.0',
-      created_at: new Date().toISOString(),
-      num_samples: this.recordingSession.length,
-      data: this.recordingSession.map((point, index) => ({
-        index,
-        timestamp: point.observation.timestamp,
-        action_type: point.action.type,
-        action_params: point.action.parameters,
-        hand_poses: point.observation.hand_poses.map(hand => ({
-          handedness: hand.handedness,
-          confidence: hand.confidence,
-          keypoints: hand.keypoints.map(kp => ({
-            name: kp.name,
-            x: kp.x,
-            y: kp.y,
-            z: kp.z,
-            confidence: kp.confidence
-          }))
-        })),
-        metadata: point.metadata
-      }))
-    };
-
-    return JSON.stringify(dataset, null, 2);
+    return baseReward + confidenceBonus + stabilityBonus;
   }
 
   startRecording(): void {
@@ -410,8 +433,51 @@ export class MediaPipeHandTrackingService {
     return this.stopRecording();
   }
 
+  getFrameBuffer(): Array<{ timestamp: number; hands: HandPose[] }> {
+    return [...this.frameBuffer];
+  }
+
+  clearFrameBuffer(): void {
+    this.frameBuffer = [];
+  }
+
+  exportToLeRobotFormat(): string {
+    const dataset = {
+      info: {
+        fps: 30,
+        video_path: 'recording.mp4',
+        total_frames: this.recordingSession.length,
+        total_episodes: 1
+      },
+      tasks: [{
+        task_index: 0,
+        episode_index: 0,
+        timestamp: this.sessionStartTime,
+        data: this.recordingSession.map((point, index) => ({
+          frame_index: index,
+          timestamp: point.timestamp,
+          observation: point.observation,
+          action: point.action,
+          reward: point.reward,
+          done: point.done
+        }))
+      }],
+      metadata: {
+        created_at: new Date().toISOString(),
+        platform: Platform.OS,
+        hand_tracking_version: '1.0.0',
+        total_data_points: this.recordingSession.length
+      }
+    };
+
+    return JSON.stringify(dataset, null, 2);
+  }
+
   dispose(): void {
-    // Remove TensorFlow model disposal since we're not using it
+    if (this.hands) {
+      this.hands.close();
+      this.hands = null;
+    }
     this.isInitialized = false;
     this.frameBuffer = [];
     this.recordingSession = [];

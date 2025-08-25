@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { audioService } from './AudioService';
-import HapticFeedback from 'react-native-haptic-feedback';
+import HapticFeedback from '../utils/haptics';
 
 export interface Achievement {
   id: string;

@@ -17,7 +17,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import HapticFeedback from 'react-native-haptic-feedback';
+import HapticFeedback from '../../utils/haptics';
 
 interface NeonButtonProps {
   title: string;

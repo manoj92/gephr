@@ -21,6 +21,14 @@ const HomeScreen: React.FC = () => {
     activeSessions: 0,
     marketplaceItems: 0,
     totalDownloads: 0,
+    completedSessions: 0,
+    platformUptime: 'Online',
+    total_robots: 0,
+    active_sessions: 0,
+    completed_sessions: 0,
+    marketplace_items: 0,
+    total_downloads: 0,
+    platform_uptime: 'Online',
   });
   const [dataRecorded] = useState('2.3 GB');
   const [earnings] = useState(47);
@@ -98,7 +106,7 @@ const HomeScreen: React.FC = () => {
               <Text style={styles.platformStat}>Robots Connected: {stats.totalRobots}</Text>
               <Text style={styles.platformStat}>Active Sessions: {stats.activeSessions}</Text>
               <Text style={styles.platformStat}>Skills in Marketplace: {stats.marketplaceItems}</Text>
-              <Text style={styles.platformStat}>Total Downloads: {stats.totalDownloads.toLocaleString()}</Text>
+              <Text style={styles.platformStat}>Total Downloads: {(stats.totalDownloads || 0).toLocaleString()}</Text>
             </View>
           </View>
 

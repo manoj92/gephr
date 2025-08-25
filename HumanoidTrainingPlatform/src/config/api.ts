@@ -4,7 +4,7 @@
 export const API_BASE_URL = __DEV__ 
   ? 'http://localhost:8000'  // Development
   : 'https://h5ealiw6qj.execute-api.us-east-1.amazonaws.com/prod';  // Production
-export const DEMO_MODE = false;
+export const DEMO_MODE = true; // Enable demo mode to bypass backend requirements
 
 // API endpoints
 export const API_ENDPOINTS = {

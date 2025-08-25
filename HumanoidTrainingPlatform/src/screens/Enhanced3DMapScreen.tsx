@@ -20,7 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Canvas, useFrame } from '@react-three/fiber/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import HapticFeedback from 'react-native-haptic-feedback';
+import HapticFeedback from '../utils/haptics';
 
 import { COLORS, SPACING } from '../constants/theme';
 import { GlassCard } from '../components/ui/GlassCard';

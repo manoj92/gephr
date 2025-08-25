@@ -1,0 +1,124 @@
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
+import { Provider } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SplashScreen from 'expo-splash-screen';
+
+import { store } from './src/store';
+import AppNavigator from './src/navigation/AppNavigator';
+import OnboardingScreen from './src/screens/OnboardingScreen';
+import AchievementNotification from './src/components/ui/AchievementNotification';
+import { ParticleBackground } from './src/components/ui/ParticleBackground';
+import { achievementService, Achievement } from './src/services/AchievementService';
+import { audioService } from './src/services/AudioService';
+import { tensorFlowInit } from './src/services/TensorFlowInit';
+import { COLORS } from './src/constants/theme';
+
+// Keep splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
+export default function App() {
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean | null>(null);
+  const [currentAchievement, setCurrentAchievement] = useState<Achievement | null>(null);
+  const [showAchievement, setShowAchievement] = useState(false);
+
+  useEffect(() => {
+    initializeApp();
+  }, []);
+
+  useEffect(() => {
+    // Subscribe to achievement notifications
+    const unsubscribe = achievementService.subscribeToAchievements((achievement) => {
+      setCurrentAchievement(achievement);
+      setShowAchievement(true);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const initializeApp = async () => {
+    try {
+      // Skip onboarding for demo - go straight to main app
+      setIsOnboardingComplete(true);
+      
+      console.log('App initialization complete');
+      
+      // Hide splash screen
+      await SplashScreen.hideAsync();
+    } catch (error) {
+      console.error('Failed to initialize app:', error);
+      setIsOnboardingComplete(true);
+      await SplashScreen.hideAsync();
+    }
+  };
+
+  const handleOnboardingComplete = async () => {
+    try {
+      await AsyncStorage.setItem('onboardingComplete', 'true');
+      setIsOnboardingComplete(true);
+      
+      // Play welcome sound
+      await audioService.playSuccess();
+      
+      // Award welcome achievement
+      await achievementService.updateStat('totalXP', 50);
+    } catch (error) {
+      console.error('Failed to complete onboarding:', error);
+      setIsOnboardingComplete(true);
+    }
+  };
+
+  const handleAchievementDismiss = () => {
+    setShowAchievement(false);
+    setCurrentAchievement(null);
+  };
+
+  // Show loading screen while determining onboarding status
+  if (isOnboardingComplete === null) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ParticleBackground particleCount={30} />
+        <StatusBar style="light" />
+      </View>
+    );
+  }
+
+  return (
+    <Provider store={store}>
+      <View style={styles.container}>
+        <NavigationContainer>
+          {isOnboardingComplete ? (
+            <AppNavigator />
+          ) : (
+            <OnboardingScreen onComplete={handleOnboardingComplete} />
+          )}
+          <StatusBar style="light" />
+        </NavigationContainer>
+
+        {/* Achievement Notification Overlay */}
+        {currentAchievement && (
+          <AchievementNotification
+            achievement={currentAchievement}
+            visible={showAchievement}
+            onDismiss={handleAchievementDismiss}
+          />
+        )}
+      </View>
+    </Provider>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

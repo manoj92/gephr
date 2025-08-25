@@ -15,7 +15,7 @@
       "android",
       "web"
     ],
-    "sdkVersion": "51.0.0",
+    "sdkVersion": "53.0.0",
     "runtimeVersion": "1.0.0",
     "updates": {
       "enabled": true,

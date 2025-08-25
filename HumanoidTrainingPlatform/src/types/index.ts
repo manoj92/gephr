@@ -2,15 +2,15 @@
 export interface HandKeypoint {
   x: number;
   y: number;
-  z?: number;
-  confidence: number;
+  z: number;
   name: string;
+  score: number;
 }
 
 export interface HandPose {
   keypoints: HandKeypoint[];
   handedness: 'left' | 'right';
-  confidence: number;
+  score: number;
 }
 
 // Camera frame data
@@ -30,19 +30,35 @@ export interface LerobotAction {
 }
 
 export interface LerobotObservation {
+  image: any; // Camera frame data
+  state: {
+    hand_positions: Array<{
+      position: { x: number; y: number; z: number };
+      orientation: { roll: number; pitch: number; yaw: number };
+      gesture: string;
+    }>;
+  };
   timestamp: number;
-  hand_poses: HandPose[];
-  camera_frame: CameraFrame;
 }
 
 export interface LerobotDataPoint {
   observation: LerobotObservation;
   action: LerobotAction;
+  reward: number;
+  done: boolean;
+  info: {
+    frame_id: number;
+    confidence: number;
+    num_hands: number;
+  };
+  timestamp: number;
   metadata: {
-    session_id: string;
-    device_type: string;
-    recording_quality: string;
-    environment: string;
+    device_info: {
+      platform: string;
+      model: string;
+    };
+    recording_session: string;
+    hand_tracking_version: string;
   };
 }
 

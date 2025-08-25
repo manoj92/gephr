@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_ENDPOINTS, API_CONFIG, buildApiUrl } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS, API_CONFIG, buildApiUrl, DEMO_MODE } from '../config/api';
 
 // Types
 export interface Robot {
@@ -58,6 +58,11 @@ class ApiService {
     endpoint: string, 
     options: RequestInit = {}
   ): Promise<T> {
+    // Demo mode: return mock data
+    if (DEMO_MODE) {
+      return this.getMockResponse<T>(endpoint, options);
+    }
+
     const url = buildApiUrl(endpoint);
     const config = {
       ...API_CONFIG,
@@ -85,6 +90,72 @@ class ApiService {
       console.error(`API request failed: ${url}`, error);
       throw error;
     }
+  }
+
+  // Mock response generator for demo mode
+  private async getMockResponse<T>(endpoint: string, options: RequestInit): Promise<T> {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Generate mock responses based on endpoint
+    if (endpoint.includes('/training/sessions') && options.method === 'POST') {
+      return {
+        id: `session_${Date.now()}`,
+        name: JSON.parse(options.body as string)?.name || 'Training Session',
+        robot_id: JSON.parse(options.body as string)?.robot_id || 'default_robot',
+        status: 'active',
+        start_time: new Date().toISOString(),
+        data_points: 0,
+      } as unknown as T;
+    }
+
+    if (endpoint.includes('/training/sessions') && endpoint.includes('/data')) {
+      return {
+        message: 'Training data uploaded successfully',
+        total_points: JSON.parse(options.body as string)?.length || 0,
+      } as unknown as T;
+    }
+
+    if (endpoint.includes('/training/sessions') && endpoint.includes('/complete')) {
+      return {
+        message: 'Session completed successfully',
+        session: {
+          id: endpoint.split('/')[4],
+          status: 'completed',
+          end_time: new Date().toISOString(),
+        },
+      } as unknown as T;
+    }
+
+    if (endpoint.includes('/tracking/hand-pose')) {
+      return {
+        processed: true,
+        timestamp: new Date().toISOString(),
+        commands: [
+          { joint: 'wrist', angle: 45 },
+          { joint: 'thumb', angle: 30 },
+        ],
+      } as unknown as T;
+    }
+
+    if (endpoint.includes('/robots')) {
+      return {
+        robots: [
+          {
+            id: 'robot_1',
+            name: 'Demo Robot',
+            type: 'Unitree G1',
+            status: 'online',
+            ip_address: '192.168.1.100',
+            last_seen: new Date().toISOString(),
+          },
+        ],
+        total: 1,
+      } as unknown as T;
+    }
+
+    // Default mock response
+    return {} as T;
   }
 
   private async get<T>(endpoint: string): Promise<T> {

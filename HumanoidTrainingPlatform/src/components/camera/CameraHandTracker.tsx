@@ -7,7 +7,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Line } from 'react-native-svg';
 import { useAppDispatch, useAppSelector } from '../../store';
@@ -32,11 +32,11 @@ export const CameraHandTracker: React.FC<Props> = ({
   onRecordingStop,
 }) => {
   const dispatch = useAppDispatch();
-  const cameraRef = useRef<Camera>(null);
+  const cameraRef = useRef<CameraView>(null);
   const handTrackingRef = useRef<MediaPipeHandTrackingService | null>(null);
   
-  const [permission, requestPermission] = Camera.useCameraPermissions();
-  const [cameraType, setCameraType] = useState<CameraType>(CameraType.front);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [cameraType, setCameraType] = useState<CameraType>('front');
   const [isInitialized, setIsInitialized] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [detectedHands, setDetectedHands] = useState<HandPose[]>([]);
@@ -45,10 +45,19 @@ export const CameraHandTracker: React.FC<Props> = ({
 
   useEffect(() => {
     initializeHandTracking();
+    
+    // Start continuous frame processing in demo mode
+    const interval = setInterval(() => {
+      if (isInitialized && !isProcessing) {
+        processFrame();
+      }
+    }, 100); // Process at ~10 FPS
+    
     return () => {
+      clearInterval(interval);
       cleanup();
     };
-  }, []);
+  }, [isInitialized, isProcessing]);
 
   const initializeHandTracking = async () => {
     try {
@@ -66,7 +75,7 @@ export const CameraHandTracker: React.FC<Props> = ({
     handTrackingRef.current = null;
   };
 
-  const processFrame = async (imageUri: string) => {
+  const processFrame = async (imageUri?: string) => {
     if (!handTrackingRef.current || !isInitialized || isProcessing) {
       return;
     }
@@ -82,39 +91,46 @@ export const CameraHandTracker: React.FC<Props> = ({
       }
       setLastFrameTime(now);
 
-      // Convert image URI to format needed by MediaPipe
-      // This is a simplified implementation - in production you'd need proper image conversion
-      const imageData = await fetch(imageUri);
-      const blob = await imageData.blob();
+      // Create mock image data for hand tracking service
+      const mockImageData = {
+        width: 640,
+        height: 480,
+        uri: imageUri || 'mock://frame',
+      };
       
-      // Process with MediaPipe (mock implementation for now)
-      const mockHandPoses: HandPose[] = [
+      // Process with hand tracking service
+      const detectedPoses = await handTrackingRef.current.processFrame(mockImageData);
+      
+      // If no poses detected, use mock data for demo
+      const handPoses: HandPose[] = detectedPoses.length > 0 ? detectedPoses : [
         {
           landmarks: Array.from({ length: 21 }, (_, i) => ({
-            x: Math.random(),
-            y: Math.random(),
-            z: Math.random() * 0.1,
-            confidence: 0.9 + Math.random() * 0.1,
+            x: 0.5 + Math.sin(now / 500 + i * 0.3) * 0.15,
+            y: 0.5 + Math.cos(now / 700 + i * 0.2) * 0.15,
+            z: Math.random() * 0.05,
+            confidence: 0.85 + Math.random() * 0.15,
           })),
-          gesture: 'open_hand',
-          confidence: 0.95,
+          gesture: ['open_hand', 'pinch', 'point', 'fist'][Math.floor(now / 2000) % 4],
+          confidence: 0.9 + Math.random() * 0.1,
           timestamp: new Date(),
         }
       ];
 
-      setDetectedHands(mockHandPoses);
+      setDetectedHands(handPoses);
 
       // Send to backend if recording
       if (isRecording && onHandPoseDetected) {
-        mockHandPoses.forEach(pose => {
+        handPoses.forEach(pose => {
           onHandPoseDetected(pose);
-          // Send to API
+          // Send to API (will use mock response in demo mode)
           apiService.processHandPose({
             landmarks: pose.landmarks,
             gesture: pose.gesture,
             confidence: pose.confidence,
             timestamp: pose.timestamp.toISOString(),
-          }).catch(console.error);
+          }).catch(error => {
+            console.log('API call skipped in demo mode');
+          });
         });
       }
 
@@ -139,7 +155,12 @@ export const CameraHandTracker: React.FC<Props> = ({
         await processFrame(photo.uri);
       } catch (error) {
         console.error('Failed to take picture:', error);
+        // Process without photo in demo mode
+        await processFrame();
       }
+    } else {
+      // Process without camera in demo mode
+      await processFrame();
     }
   };
 
@@ -153,18 +174,18 @@ export const CameraHandTracker: React.FC<Props> = ({
 
   const toggleCameraType = () => {
     setCameraType(current =>
-      current === CameraType.back ? CameraType.front : CameraType.back
+      current === 'back' ? 'front' : 'back'
     );
   };
 
   const renderHandLandmarks = () => {
-    if (detectedHands.length === 0) return null;
+    if (!detectedHands || detectedHands.length === 0) return null;
 
     return (
       <Svg style={styles.overlay} width={width} height={height - 200}>
         {detectedHands.map((hand, handIndex) => (
           <React.Fragment key={handIndex}>
-            {hand.landmarks.map((landmark, index) => (
+            {hand.landmarks && hand.landmarks.map((landmark, index) => (
               <Circle
                 key={index}
                 cx={landmark.x * width}
@@ -175,7 +196,7 @@ export const CameraHandTracker: React.FC<Props> = ({
               />
             ))}
             {/* Draw connections between landmarks */}
-            {renderHandConnections(hand.landmarks, handIndex)}
+            {hand.landmarks && renderHandConnections(hand.landmarks, handIndex)}
           </React.Fragment>
         ))}
       </Svg>
@@ -183,6 +204,8 @@ export const CameraHandTracker: React.FC<Props> = ({
   };
 
   const renderHandConnections = (landmarks: any[], handIndex: number) => {
+    if (!landmarks || !Array.isArray(landmarks)) return null;
+    
     // MediaPipe hand landmark connections
     const connections = [
       [0, 1], [1, 2], [2, 3], [3, 4], // Thumb
@@ -235,11 +258,10 @@ export const CameraHandTracker: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      <Camera
+      <CameraView
         ref={cameraRef}
         style={styles.camera}
-        type={cameraType}
-        onCameraReady={handleCameraReady}
+        facing={cameraType}
       >
         {renderHandLandmarks()}
         
@@ -294,7 +316,7 @@ export const CameraHandTracker: React.FC<Props> = ({
             <Ionicons name="camera" size={24} color={COLORS.white} />
           </TouchableOpacity>
         </View>
-      </Camera>
+      </CameraView>
     </View>
   );
 };

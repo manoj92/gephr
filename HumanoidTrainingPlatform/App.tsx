@@ -8,82 +8,42 @@ import * as SplashScreen from 'expo-splash-screen';
 
 import { store } from './src/store';
 import AppNavigator from './src/navigation/AppNavigator';
-import OnboardingScreen from './src/screens/OnboardingScreen';
-import AchievementNotification from './src/components/ui/AchievementNotification';
-import { ParticleBackground } from './src/components/ui/ParticleBackground';
-import { achievementService, Achievement } from './src/services/AchievementService';
-import { audioService } from './src/services/AudioService';
 import { COLORS } from './src/constants/theme';
 
 // Keep splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean | null>(null);
-  const [currentAchievement, setCurrentAchievement] = useState<Achievement | null>(null);
-  const [showAchievement, setShowAchievement] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     initializeApp();
   }, []);
 
-  useEffect(() => {
-    // Subscribe to achievement notifications
-    const unsubscribe = achievementService.subscribeToAchievements((achievement) => {
-      setCurrentAchievement(achievement);
-      setShowAchievement(true);
-    });
-
-    return unsubscribe;
-  }, []);
-
   const initializeApp = async () => {
     try {
-      // Check if onboarding has been completed
-      const onboardingStatus = await AsyncStorage.getItem('onboardingComplete');
-      setIsOnboardingComplete(onboardingStatus === 'true');
-
-      // Initialize services
-      await Promise.all([
-        // Audio service is already initializing in its constructor
-        // Achievement service is already initializing in its constructor
-      ]);
-
+      // Simple initialization - just check storage
+      console.log('Initializing Humanoid Training Platform...');
+      
+      // Small delay to show splash screen
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setIsReady(true);
+      console.log('App initialization complete');
+      
       // Hide splash screen
       await SplashScreen.hideAsync();
     } catch (error) {
       console.error('Failed to initialize app:', error);
-      setIsOnboardingComplete(false);
+      setIsReady(true);
       await SplashScreen.hideAsync();
     }
   };
 
-  const handleOnboardingComplete = async () => {
-    try {
-      await AsyncStorage.setItem('onboardingComplete', 'true');
-      setIsOnboardingComplete(true);
-      
-      // Play welcome sound
-      await audioService.playSuccess();
-      
-      // Award welcome achievement
-      await achievementService.updateStat('totalXP', 50);
-    } catch (error) {
-      console.error('Failed to complete onboarding:', error);
-      setIsOnboardingComplete(true);
-    }
-  };
-
-  const handleAchievementDismiss = () => {
-    setShowAchievement(false);
-    setCurrentAchievement(null);
-  };
-
-  // Show loading screen while determining onboarding status
-  if (isOnboardingComplete === null) {
+  // Show loading while initializing
+  if (!isReady) {
     return (
       <View style={styles.loadingContainer}>
-        <ParticleBackground particleCount={30} />
         <StatusBar style="light" />
       </View>
     );
@@ -91,25 +51,12 @@ export default function App() {
 
   return (
     <Provider store={store}>
-      <View style={styles.container}>
-        <NavigationContainer>
-          {isOnboardingComplete ? (
-            <AppNavigator />
-          ) : (
-            <OnboardingScreen onComplete={handleOnboardingComplete} />
-          )}
+      <NavigationContainer>
+        <View style={styles.container}>
           <StatusBar style="light" />
-        </NavigationContainer>
-
-        {/* Achievement Notification Overlay */}
-        {currentAchievement && (
-          <AchievementNotification
-            achievement={currentAchievement}
-            visible={showAchievement}
-            onDismiss={handleAchievementDismiss}
-          />
-        )}
-      </View>
+          <AppNavigator />
+        </View>
+      </NavigationContainer>
     </Provider>
   );
 }
@@ -122,7 +69,5 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

@@ -23,7 +23,7 @@ import Animated, {
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import HapticFeedback from 'react-native-haptic-feedback';
+import HapticFeedback from '../utils/haptics';
 
 import { COLORS, SPACING } from '../constants/theme';
 import { GlassCard } from '../components/ui/GlassCard';
