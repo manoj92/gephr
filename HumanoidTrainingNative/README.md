@@ -2,9 +2,33 @@
 
 A React Native mobile application that transforms smartphone footage into comprehensive robot training data. The platform enables users to capture hand movements while performing any task, generate LeRobot-compatible datasets, and contribute to humanoid robot training.
 
+## The Problem We're Solving
+
+**Humanoid robots face a critical data shortage.** Despite significant advances in robotics hardware and AI, humanoid robots struggle to perform everyday tasks that humans execute effortlessly. The primary bottleneck isn't computational power or mechanical capability—it's the lack of diverse, high-quality training data.
+
+Current challenges in humanoid robot training:
+- **Limited datasets**: Most robot training data comes from controlled lab environments
+- **Expensive data collection**: Traditional motion capture systems cost hundreds of thousands of dollars
+- **Narrow skill coverage**: Existing datasets focus on specific tasks, not general human activities
+- **Scalability issues**: Professional data collection doesn't scale to millions of everyday scenarios
+
+## Our Solution
+
+This app democratizes robot training data collection by turning every smartphone into a professional motion capture system. By crowdsourcing human demonstrations of everyday tasks, we can build the massive, diverse datasets that humanoid robots need to learn human-level dexterity and adaptability.
+
+**Key Innovation**: We leverage the ubiquity of smartphones and computer vision to capture the same quality hand tracking data that traditionally required expensive laboratory equipment.
+
 ## Overview
 
 This application is designed to work with smartphones worn on the user's body to capture video and extract hand tracking data in LeRobot format. It can record anything from cooking an omelette to a whole day's housework to tasks in a car factory, with adaptive UI for any episode length.
+
+### What Makes This App Different
+
+- **Accessibility**: Uses standard smartphone hardware—no special equipment needed
+- **Real-world data**: Captures genuine human behavior in natural environments
+- **Scalable**: Anyone can contribute training data from anywhere
+- **Comprehensive**: Records the full spectrum of human hand movements and tasks
+- **Industry-standard**: Outputs data in LeRobot format for immediate use in robot training pipelines
 
 ## Key Features
 
