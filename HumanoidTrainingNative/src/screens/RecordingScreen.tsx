@@ -313,14 +313,16 @@ const RecordingScreen: React.FC = () => {
 
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
-          {/* New Task Button */}
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={handleStartNewTask}
-          >
-            <Icon name="add-circle" size={20} color={COLORS.primary} />
-            <Text style={styles.secondaryButtonText}>Start New Task</Text>
-          </TouchableOpacity>
+          {/* New Task Button - only show when there's existing data */}
+          {(stats.episodes > 0 || stats.currentEpisodeFrames > 0) && (
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleStartNewTask}
+            >
+              <Icon name="add-circle" size={20} color={COLORS.primary} />
+              <Text style={styles.secondaryButtonText}>Start New Task</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Export Button */}
           {(stats.episodes > 0 || stats.currentEpisodeFrames > 0) && (
