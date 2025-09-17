@@ -126,27 +126,18 @@ const RecordingScreen: React.FC = () => {
     }
   };
 
-  const handleExportSkillData = async () => {
-    if (!stats.currentSkill) {
-      Alert.alert('No Task Selected', 'Please start recording a task first');
-      return;
-    }
+  const handleExportAllData = async () => {
+    const stats = HandTrackingService.getStats();
 
-    if (stats.skillEpisodeCount === 0) {
-      Alert.alert('No Episodes', 'No episodes recorded for this task');
+    if (stats.episodes === 0) {
+      Alert.alert('No Data', 'No training data has been recorded yet');
       return;
     }
 
     try {
-      await HandTrackingService.shareExportedData();
-
-      Alert.alert(
-        'Export Complete',
-        `Successfully exported ${stats.skillEpisodeCount} episodes for "${stats.currentSkill}" as a zip file. You can now share it with your training pipeline.`,
-        [{ text: 'OK' }]
-      );
+      await HandTrackingService.exportAndShare();
     } catch (error) {
-      Alert.alert('Export Error', 'Failed to export task data');
+      Alert.alert('Export Error', 'Failed to export training data');
     }
   };
 
@@ -313,13 +304,13 @@ const RecordingScreen: React.FC = () => {
         </View>
 
         {/* Export Button */}
-        {stats.skillEpisodeCount > 0 && (
+        {stats.episodes > 0 && (
           <TouchableOpacity
             style={styles.exportButton}
-            onPress={handleExportSkillData}
+            onPress={handleExportAllData}
           >
             <Icon name="download" size={20} color={COLORS.primary} />
-            <Text style={styles.exportButtonText}>Export "{stats.currentSkill}" Data</Text>
+            <Text style={styles.exportButtonText}>Export All Training Data</Text>
           </TouchableOpacity>
         )}
 
