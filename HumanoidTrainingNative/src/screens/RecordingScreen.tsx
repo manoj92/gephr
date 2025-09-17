@@ -141,6 +141,45 @@ const RecordingScreen: React.FC = () => {
     }
   };
 
+  const handleStartNewTask = () => {
+    Alert.prompt(
+      'New Task',
+      'What task would you like to start?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Start',
+          onPress: (taskName) => {
+            if (taskName && taskName.trim()) {
+              // Clear all existing data and start fresh
+              HandTrackingService.clearAllData();
+              setSkillLabel(taskName.trim());
+              HandTrackingService.setCurrentSkill(taskName.trim());
+              setIsRecording(true);
+              setShowSkillInput(false);
+
+              // Start continuous frame processing only if no camera permission
+              if (!hasCameraPermission) {
+                trackingIntervalRef.current = setInterval(() => {
+                  simulateFrameProcessing();
+                }, 33); // ~30fps
+              }
+
+              updateStats();
+              console.log(`Started new task: ${taskName}`);
+            }
+          }
+        }
+      ],
+      'plain-text',
+      '',
+      'e.g., cooking omelet, cleaning kitchen'
+    );
+  };
+
   const SkillInputModal = () => (
     <View style={styles.skillInputContainer}>
       <Text style={styles.skillInputTitle}>What task are you demonstrating?</Text>
@@ -298,21 +337,33 @@ const RecordingScreen: React.FC = () => {
               color={COLORS.text}
             />
             <Text style={styles.actionButtonText}>
-              {isRecording ? 'Stop Recording' : (stats.currentSkill ? 'Continue Recording' : 'Start New Task')}
+              {isRecording ? 'Stop Recording' : (stats.currentSkill ? 'Continue Recording' : 'Start Recording')}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Export Button */}
-        {stats.episodes > 0 && (
+        {/* Action Buttons */}
+        <View style={styles.buttonContainer}>
+          {/* New Task Button */}
           <TouchableOpacity
-            style={styles.exportButton}
-            onPress={handleExportAllData}
+            style={styles.secondaryButton}
+            onPress={handleStartNewTask}
           >
-            <Icon name="download" size={20} color={COLORS.primary} />
-            <Text style={styles.exportButtonText}>Export All Training Data</Text>
+            <Icon name="add-circle" size={20} color={COLORS.primary} />
+            <Text style={styles.secondaryButtonText}>Start New Task</Text>
           </TouchableOpacity>
-        )}
+
+          {/* Export Button */}
+          {stats.episodes > 0 && (
+            <TouchableOpacity
+              style={styles.exportButton}
+              onPress={handleExportAllData}
+            >
+              <Icon name="download" size={20} color={COLORS.primary} />
+              <Text style={styles.exportButtonText}>Export All Training Data</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* Skill Input Modal */}
         {showSkillInput && <SkillInputModal />}
@@ -585,6 +636,25 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     ...TYPOGRAPHY.body,
     color: COLORS.text,
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    gap: SPACING.md,
+  },
+  secondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  secondaryButtonText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.primary,
+    marginLeft: SPACING.sm,
     fontWeight: '600',
   },
 });
