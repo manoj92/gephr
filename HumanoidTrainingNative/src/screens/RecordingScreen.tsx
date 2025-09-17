@@ -142,42 +142,11 @@ const RecordingScreen: React.FC = () => {
   };
 
   const handleStartNewTask = () => {
-    Alert.prompt(
-      'New Task',
-      'What task would you like to start?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
-        {
-          text: 'Start',
-          onPress: (taskName) => {
-            if (taskName && taskName.trim()) {
-              // Clear all existing data and start fresh
-              HandTrackingService.clearAllData();
-              setSkillLabel(taskName.trim());
-              HandTrackingService.setCurrentSkill(taskName.trim());
-              setIsRecording(true);
-              setShowSkillInput(false);
-
-              // Start continuous frame processing only if no camera permission
-              if (!hasCameraPermission) {
-                trackingIntervalRef.current = setInterval(() => {
-                  simulateFrameProcessing();
-                }, 33); // ~30fps
-              }
-
-              updateStats();
-              console.log(`Started new task: ${taskName}`);
-            }
-          }
-        }
-      ],
-      'plain-text',
-      '',
-      'e.g., cooking omelet, cleaning kitchen'
-    );
+    // Clear all existing data and show skill input modal
+    HandTrackingService.clearAllData();
+    setSkillLabel('');
+    setShowSkillInput(true);
+    updateStats();
   };
 
   const SkillInputModal = () => (
@@ -354,7 +323,7 @@ const RecordingScreen: React.FC = () => {
           </TouchableOpacity>
 
           {/* Export Button */}
-          {stats.episodes > 0 && (
+          {(stats.episodes > 0 || stats.currentEpisodeFrames > 0) && (
             <TouchableOpacity
               style={styles.exportButton}
               onPress={handleExportAllData}
