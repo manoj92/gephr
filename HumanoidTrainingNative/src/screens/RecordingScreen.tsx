@@ -12,8 +12,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../constants/theme';
 import HandTrackingService from '../services/HandTrackingService';
+import LeRobotExportService from '../services/LeRobotExportService';
 import { HandPose } from '../types';
 import CameraView from '../components/CameraView';
+import Logo from '../components/Logo';
 
 const RecordingScreen: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -45,10 +47,10 @@ const RecordingScreen: React.FC = () => {
     }
   }, []);
 
-  const updateStats = () => {
+  const updateStats = useCallback(() => {
     const currentStats = HandTrackingService.getRecordingStats();
     setStats(currentStats);
-  };
+  }, []);
 
   const handleCameraFrame = async (imageUri: string, timestamp: number) => {
     if (!isInitialized || !hasCameraPermission) return;
@@ -135,6 +137,12 @@ const RecordingScreen: React.FC = () => {
     }
 
     try {
+      const episodes = HandTrackingService.getAllEpisodes();
+      const taskName = stats.currentSkill || 'mixed_tasks';
+
+      await LeRobotExportService.exportToLeRobotFormat(episodes, taskName, 'humanoid');
+
+      // Also export the original format
       await HandTrackingService.exportAndShare();
     } catch (error) {
       Alert.alert('Export Error', 'Failed to export training data');
@@ -149,7 +157,7 @@ const RecordingScreen: React.FC = () => {
     updateStats();
   };
 
-  const SkillInputModal = () => (
+  const SkillInputModal = useCallback(() => (
     <View style={styles.skillInputContainer}>
       <Text style={styles.skillInputTitle}>What task are you demonstrating?</Text>
       <Text style={styles.skillInputSubtitle}>Describe the complete activity you'll perform</Text>
@@ -162,6 +170,8 @@ const RecordingScreen: React.FC = () => {
         autoFocus
         multiline
         numberOfLines={3}
+        returnKeyType="done"
+        blurOnSubmit={false}
         onSubmitEditing={() => {
           if (skillLabel.trim()) {
             startSkillTraining();
@@ -193,7 +203,7 @@ const RecordingScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [skillLabel]);
 
   const getStatusColor = () => {
     if (!isInitialized) return COLORS.textSecondary;
@@ -216,6 +226,7 @@ const RecordingScreen: React.FC = () => {
 
         {/* Header */}
         <View style={styles.header}>
+          <Logo size={80} style={styles.logo} />
           <Text style={styles.title}>Humanoid Training</Text>
           <Text style={styles.subtitle}>Capture human movements for robot learning</Text>
         </View>
@@ -226,6 +237,7 @@ const RecordingScreen: React.FC = () => {
             onFrameCapture={handleCameraFrame}
             isRecording={isRecording}
             onPermissionChange={setHasCameraPermission}
+            handPoses={handPoses}
           />
 
           {/* Status Indicator Overlay */}
@@ -236,21 +248,6 @@ const RecordingScreen: React.FC = () => {
             </Text>
           </View>
 
-          {/* Hand Detection Overlay */}
-          {handPoses.length > 0 && (
-            <View style={styles.handIndicators}>
-              {handPoses.map((hand, index) => (
-                <View key={index} style={styles.handIndicator}>
-                  <Icon
-                    name={hand.handedness === 'Left' ? 'hand-left' : 'hand-right'}
-                    size={16}
-                    color={COLORS.primary}
-                  />
-                  <Text style={styles.handIndicatorText}>{hand.handedness}</Text>
-                </View>
-              ))}
-            </View>
-          )}
         </View>
 
         {/* Current Skill */}
@@ -331,7 +328,7 @@ const RecordingScreen: React.FC = () => {
               onPress={handleExportAllData}
             >
               <Icon name="download" size={20} color={COLORS.primary} />
-              <Text style={styles.exportButtonText}>Export All Training Data</Text>
+              <Text style={styles.exportButtonText}>Export LeRobot Dataset</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -356,6 +353,9 @@ const styles = StyleSheet.create({
   header: {
     paddingVertical: SPACING.lg,
     alignItems: 'center',
+  },
+  logo: {
+    marginBottom: SPACING.md,
   },
   title: {
     ...TYPOGRAPHY.h2,

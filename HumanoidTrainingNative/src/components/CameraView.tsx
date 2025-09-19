@@ -3,23 +3,35 @@ import { View, StyleSheet, Text, TouchableOpacity, PermissionsAndroid, Platform 
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../constants/theme';
+import HandTrackingOverlay from './HandTrackingOverlay';
+import { HandPose } from '../types';
 
 interface CameraViewProps {
   onFrameCapture: (imageUri: string, timestamp: number) => void;
   isRecording: boolean;
   onPermissionChange?: (hasPermission: boolean) => void;
+  handPoses?: HandPose[];
 }
 
 const CameraViewComponent: React.FC<CameraViewProps> = ({
   onFrameCapture,
   isRecording,
-  onPermissionChange
+  onPermissionChange,
+  handPoses = []
 }) => {
-  const [facing, setFacing] = useState<'front' | 'back'>('front');
+  // Shirt pocket recording: Use back camera by default
+  const [facing, setFacing] = useState<'front' | 'back'>('back');
+  const [frameRate, setFrameRate] = useState<number>(15);
+  const [zoomLevel, setZoomLevel] = useState<number>(0.8);
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice(facing);
   const frameIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const cameraRef = useRef<Camera>(null);
+  const [cameraSettings, setCameraSettings] = useState({
+    exposure: 0,
+    iso: 200,
+    whiteBalance: 'auto' as const
+  });
 
   useEffect(() => {
     if (hasPermission === false) {
@@ -41,19 +53,24 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
   const startFrameCapture = () => {
     if (frameIntervalRef.current) return;
 
+    // Optimized frame rate for hand tracking from shirt pocket
+    const interval = Math.floor(1000 / frameRate);
+
     frameIntervalRef.current = setInterval(async () => {
       try {
         if (cameraRef.current) {
           const photo = await cameraRef.current.takePhoto({
-            qualityPrioritization: 'speed',
+            qualityPrioritization: 'balanced',
             enableShutterSound: false,
+            enableAutoRedEyeReduction: false,
+            enableAutoStabilization: true,
           });
           onFrameCapture(photo.path, Date.now());
         }
       } catch (error) {
         console.error('Error capturing frame:', error);
       }
-    }, 100); // 10 FPS - adjust as needed for performance
+    }, interval);
   };
 
   const stopFrameCapture = () => {
@@ -99,7 +116,36 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
         device={device}
         isActive={true}
         photo={true}
+        zoom={device?.neutralZoom ? device.neutralZoom * zoomLevel : 1}
+        enableZoomGesture={false}
+        exposure={cameraSettings.exposure}
+        enableHighQualityPhotos={true}
+        orientation="portrait"
       />
+
+      {/* Enhanced hand tracking overlay with shirt pocket optimization */}
+      <HandTrackingOverlay
+        handPoses={handPoses}
+        cameraWidth={250}
+        cameraHeight={250}
+        shirtPocketMode={true}
+      />
+
+      {/* Shirt pocket mode indicator */}
+      <View style={styles.modeIndicator}>
+        <Icon name="shirt-outline" size={16} color={COLORS.primary} />
+        <Text style={styles.modeText}>Shirt Pocket Mode</Text>
+      </View>
+
+      {/* Hand detection guides for optimal positioning */}
+      {!isRecording && handPoses.length === 0 && (
+        <View style={styles.positionGuide}>
+          <View style={styles.guideBox}>
+            <Text style={styles.guideText}>Position hands in view</Text>
+            <View style={styles.handZone} />
+          </View>
+        </View>
+      )}
 
       {/* Recording indicator */}
       {isRecording && (
@@ -117,14 +163,36 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
         <Icon name="camera-reverse" size={24} color={COLORS.text} />
       </TouchableOpacity>
 
-      {/* Camera info */}
+      {/* Camera info with enhanced metrics */}
       <View style={styles.cameraInfo}>
         <Text style={styles.cameraInfoText}>
           {facing === 'front' ? 'Front Camera' : 'Back Camera'}
         </Text>
         <Text style={styles.cameraInfoText}>
-          {isRecording ? '10 FPS' : 'Ready'}
+          {isRecording ? `${frameRate} FPS` : `${handPoses.length} hands`}
         </Text>
+        {handPoses.length > 0 && (
+          <Text style={styles.cameraInfoText}>
+            {handPoses[0]?.currentAction || 'detecting'}
+          </Text>
+        )}
+      </View>
+
+      {/* Frame rate control */}
+      <View style={styles.frameRateControl}>
+        <TouchableOpacity
+          style={styles.frameRateButton}
+          onPress={() => setFrameRate(Math.max(5, frameRate - 5))}
+        >
+          <Icon name="remove" size={20} color={COLORS.text} />
+        </TouchableOpacity>
+        <Text style={styles.frameRateText}>{frameRate} FPS</Text>
+        <TouchableOpacity
+          style={styles.frameRateButton}
+          onPress={() => setFrameRate(Math.min(30, frameRate + 5))}
+        >
+          <Icon name="add" size={20} color={COLORS.text} />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -187,10 +255,13 @@ const styles = StyleSheet.create({
     left: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.error + '20',
+    backgroundColor: COLORS.error + 'E0',
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.error,
+    zIndex: 100,
   },
   recordingDot: {
     width: 8,
@@ -208,26 +279,111 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: SPACING.md,
     right: SPACING.md,
-    backgroundColor: COLORS.surface + '80',
+    backgroundColor: COLORS.surface + 'E0',
     width: 44,
     height: 44,
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primary + '40',
+    zIndex: 100,
   },
   cameraInfo: {
     position: 'absolute',
     bottom: SPACING.md,
     left: SPACING.md,
-    backgroundColor: COLORS.surface + '80',
+    backgroundColor: COLORS.surface + 'E0',
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '40',
+    zIndex: 100,
   },
   cameraInfoText: {
     ...TYPOGRAPHY.small,
     color: COLORS.text,
     fontWeight: '500',
+  },
+  modeIndicator: {
+    position: 'absolute',
+    top: SPACING.md + 60,
+    left: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface + 'E0',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '40',
+    zIndex: 100,
+  },
+  modeText: {
+    ...TYPOGRAPHY.small,
+    color: COLORS.primary,
+    fontWeight: '600',
+    marginLeft: SPACING.xs,
+  },
+  positionGuide: {
+    position: 'absolute',
+    top: '30%',
+    left: '10%',
+    right: '10%',
+    alignItems: 'center',
+    zIndex: 50,
+  },
+  guideBox: {
+    backgroundColor: COLORS.surface + '80',
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 2,
+    borderColor: COLORS.primary + '60',
+    alignItems: 'center',
+  },
+  guideText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
+  },
+  handZone: {
+    width: 120,
+    height: 120,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    borderStyle: 'dashed',
+  },
+  frameRateControl: {
+    position: 'absolute',
+    bottom: SPACING.md + 40,
+    left: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface + 'E0',
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '40',
+    zIndex: 100,
+  },
+  frameRateButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  frameRateText: {
+    ...TYPOGRAPHY.small,
+    color: COLORS.text,
+    fontWeight: '600',
+    marginHorizontal: SPACING.sm,
+    minWidth: 50,
+    textAlign: 'center',
   },
 });
 
