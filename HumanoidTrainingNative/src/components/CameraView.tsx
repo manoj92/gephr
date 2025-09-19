@@ -4,25 +4,31 @@ import { Camera, useCameraDevice, useCameraPermission } from 'react-native-visio
 import Icon from 'react-native-vector-icons/Ionicons';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../constants/theme';
 import HandTrackingOverlay from './HandTrackingOverlay';
-import { HandPose } from '../types';
+import { HandPose, ArmPose, FullBodyPose } from '../types';
 
 interface CameraViewProps {
   onFrameCapture: (imageUri: string, timestamp: number) => void;
   isRecording: boolean;
   onPermissionChange?: (hasPermission: boolean) => void;
   handPoses?: HandPose[];
+  armPoses?: { left?: ArmPose; right?: ArmPose };
+  fullBodyPose?: FullBodyPose;
+  trackingMode?: 'hands' | 'arms' | 'full_body';
 }
 
 const CameraViewComponent: React.FC<CameraViewProps> = ({
   onFrameCapture,
   isRecording,
   onPermissionChange,
-  handPoses = []
+  handPoses = [],
+  armPoses = {},
+  fullBodyPose,
+  trackingMode = 'arms'
 }) => {
-  // Shirt pocket recording: Use back camera by default
-  const [facing, setFacing] = useState<'front' | 'back'>('back');
+  // For arm tracking: front camera for better self-view, back camera for shirt pocket
+  const [facing, setFacing] = useState<'front' | 'back'>(trackingMode === 'arms' ? 'front' : 'back');
   const [frameRate, setFrameRate] = useState<number>(15);
-  const [zoomLevel, setZoomLevel] = useState<number>(0.8);
+  const [zoomLevel, setZoomLevel] = useState<number>(trackingMode === 'arms' ? 0.6 : 0.8);
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice(facing);
   const frameIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -123,22 +129,48 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
         orientation="portrait"
       />
 
-      {/* Enhanced hand tracking overlay with shirt pocket optimization */}
+      {/* Enhanced tracking overlay */}
       <HandTrackingOverlay
         handPoses={handPoses}
+        armPoses={armPoses}
+        fullBodyPose={fullBodyPose}
+        trackingMode={trackingMode}
         cameraWidth={250}
         cameraHeight={250}
-        shirtPocketMode={true}
+        shirtPocketMode={trackingMode !== 'arms'}
       />
 
-      {/* Shirt pocket mode indicator */}
+      {/* Tracking mode indicator */}
       <View style={styles.modeIndicator}>
-        <Icon name="shirt-outline" size={16} color={COLORS.primary} />
-        <Text style={styles.modeText}>Shirt Pocket Mode</Text>
+        <Icon
+          name={trackingMode === 'arms' ? 'body-outline' : trackingMode === 'hands' ? 'hand-left-outline' : 'person-outline'}
+          size={16}
+          color={COLORS.primary}
+        />
+        <Text style={styles.modeText}>
+          {trackingMode === 'arms' ? 'Arm Tracking' : trackingMode === 'hands' ? 'Hand Tracking' : 'Full Body'}
+        </Text>
       </View>
 
-      {/* Hand detection guides for optimal positioning */}
-      {!isRecording && handPoses.length === 0 && (
+      {/* Arm positioning guides */}
+      {trackingMode === 'arms' && !isRecording && !armPoses.left && !armPoses.right && (
+        <View style={styles.positionGuide}>
+          <View style={styles.guideBox}>
+            <Text style={styles.guideText}>Position arms clearly in view</Text>
+            <View style={styles.armGuideContainer}>
+              <View style={styles.armZone}>
+                <Text style={styles.armZoneText}>Left Arm</Text>
+              </View>
+              <View style={styles.armZone}>
+                <Text style={styles.armZoneText}>Right Arm</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Hand guides for hand-only mode */}
+      {trackingMode === 'hands' && !isRecording && handPoses.length === 0 && (
         <View style={styles.positionGuide}>
           <View style={styles.guideBox}>
             <Text style={styles.guideText}>Position hands in view</Text>
@@ -171,9 +203,19 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
         <Text style={styles.cameraInfoText}>
           {isRecording ? `${frameRate} FPS` : `${handPoses.length} hands`}
         </Text>
-        {handPoses.length > 0 && (
+        {trackingMode === 'arms' && (armPoses.left || armPoses.right) && (
+          <Text style={styles.cameraInfoText}>
+            L: {armPoses.left ? '✓' : '✗'} R: {armPoses.right ? '✓' : '✗'}
+          </Text>
+        )}
+        {trackingMode === 'hands' && handPoses.length > 0 && (
           <Text style={styles.cameraInfoText}>
             {handPoses[0]?.currentAction || 'detecting'}
+          </Text>
+        )}
+        {trackingMode === 'full_body' && fullBodyPose && (
+          <Text style={styles.cameraInfoText}>
+            Body: {fullBodyPose.confidence.toFixed(2)}
           </Text>
         )}
       </View>
@@ -354,6 +396,29 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     borderRadius: BORDER_RADIUS.md,
     borderStyle: 'dashed',
+  },
+  armGuideContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: SPACING.sm,
+  },
+  armZone: {
+    width: 80,
+    height: 160,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary + '10',
+  },
+  armZoneText: {
+    ...TYPOGRAPHY.small,
+    color: COLORS.primary,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   frameRateControl: {
     position: 'absolute',

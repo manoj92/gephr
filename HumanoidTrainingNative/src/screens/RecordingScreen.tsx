@@ -159,13 +159,13 @@ const RecordingScreen: React.FC = () => {
 
   const SkillInputModal = useCallback(() => (
     <View style={styles.skillInputContainer}>
-      <Text style={styles.skillInputTitle}>What task are you demonstrating?</Text>
-      <Text style={styles.skillInputSubtitle}>Describe the complete activity you'll perform</Text>
+      <Text style={styles.skillInputTitle}>What {trackingMode} task are you demonstrating?</Text>
+      <Text style={styles.skillInputSubtitle}>Describe the complete {trackingMode} activity you'll perform</Text>
       <TextInput
         style={styles.skillInput}
         value={skillLabel}
         onChangeText={setSkillLabel}
-        placeholder="e.g., 'cooking omelet', 'assembling car part', 'cleaning kitchen', 'folding laundry'"
+        placeholder={trackingMode === 'arms' ? "e.g., 'reaching and grasping', 'bimanual assembly', 'arm coordination'" : trackingMode === 'hands' ? "e.g., 'precision grasping', 'finger manipulation'" : "e.g., 'full body coordination', 'complex movements'"}
         placeholderTextColor={COLORS.textSecondary}
         autoFocus
         multiline
