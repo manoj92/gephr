@@ -220,7 +220,96 @@ export class ArmTrackingService {
     return landmarks;
   }
 
-  // Removed mock generation - now using real detection methods
+  // Mock data generation for development and testing
+  private generateMockArmPoses(timestamp: number): { left?: ArmPose; right?: ArmPose } {
+    // Generate animated arm poses to test the overlay
+    const time = timestamp / 1000; // Convert to seconds
+
+    const leftArm: ArmPose = {
+      side: 'Left',
+      shoulder: { x: 0.3, y: 0.3, z: 0, confidence: 0.9 },
+      elbow: { x: 0.2 + Math.sin(time) * 0.1, y: 0.4 + Math.cos(time) * 0.05, z: 0, confidence: 0.9 },
+      wrist: { x: 0.1 + Math.sin(time * 1.2) * 0.15, y: 0.5 + Math.cos(time * 1.2) * 0.1, z: 0, confidence: 0.9 },
+      hand: {
+        handedness: 'Left',
+        landmarks: this.generateMockHandLandmarks(0.1 + Math.sin(time * 1.2) * 0.15, 0.5 + Math.cos(time * 1.2) * 0.1),
+        confidence: 0.85,
+        currentAction: Math.sin(time * 2) > 0 ? 'grasp' : 'open',
+        timestamp
+      },
+      confidence: 0.9,
+      jointAngles: {
+        shoulderFlexion: 45 + Math.sin(time) * 20,
+        shoulderAbduction: 30 + Math.cos(time) * 15,
+        shoulderRotation: Math.sin(time * 0.5) * 10,
+        elbowFlexion: 90 + Math.cos(time * 1.5) * 30,
+        wristFlexion: Math.sin(time * 2) * 15,
+        wristDeviation: Math.cos(time * 2) * 10
+      },
+      timestamp
+    };
+
+    const rightArm: ArmPose = {
+      side: 'Right',
+      shoulder: { x: 0.7, y: 0.3, z: 0, confidence: 0.9 },
+      elbow: { x: 0.8 - Math.sin(time * 0.8) * 0.1, y: 0.4 + Math.sin(time * 0.8) * 0.05, z: 0, confidence: 0.9 },
+      wrist: { x: 0.9 - Math.sin(time) * 0.15, y: 0.5 + Math.sin(time) * 0.1, z: 0, confidence: 0.9 },
+      hand: {
+        handedness: 'Right',
+        landmarks: this.generateMockHandLandmarks(0.9 - Math.sin(time) * 0.15, 0.5 + Math.sin(time) * 0.1),
+        confidence: 0.85,
+        currentAction: Math.cos(time * 2) > 0 ? 'point' : 'open',
+        timestamp
+      },
+      confidence: 0.9,
+      jointAngles: {
+        shoulderFlexion: 45 - Math.sin(time * 0.8) * 20,
+        shoulderAbduction: 30 - Math.cos(time * 0.8) * 15,
+        shoulderRotation: -Math.sin(time * 0.5) * 10,
+        elbowFlexion: 90 - Math.cos(time) * 30,
+        wristFlexion: -Math.sin(time * 2) * 15,
+        wristDeviation: -Math.cos(time * 2) * 10
+      },
+      timestamp
+    };
+
+    return { left: leftArm, right: rightArm };
+  }
+
+  private generateMockHandLandmarks(centerX: number, centerY: number): any[] {
+    // Generate 21 hand landmarks around the center position
+    const landmarks = [];
+    for (let i = 0; i < 21; i++) {
+      // Arrange landmarks in a hand-like pattern
+      const angle = (i / 21) * Math.PI * 2;
+      const radius = 0.05 + (i % 5) * 0.01; // Vary radius for different fingers
+
+      landmarks.push({
+        x: centerX + Math.cos(angle) * radius,
+        y: centerY + Math.sin(angle) * radius,
+        z: 0,
+        confidence: 0.8 + Math.random() * 0.2
+      });
+    }
+    return landmarks;
+  }
+
+  private generateMockFullBodyPose(timestamp: number): FullBodyPose {
+    const time = timestamp / 1000;
+
+    return {
+      torso: {
+        leftShoulder: { x: 0.3, y: 0.3, z: 0, confidence: 0.9 },
+        rightShoulder: { x: 0.7, y: 0.3, z: 0, confidence: 0.9 },
+        leftHip: { x: 0.35, y: 0.7, z: 0, confidence: 0.9 },
+        rightHip: { x: 0.65, y: 0.7, z: 0, confidence: 0.9 },
+        neck: { x: 0.5, y: 0.25, z: 0, confidence: 0.9 },
+        nose: { x: 0.5, y: 0.2, z: 0, confidence: 0.9 }
+      },
+      confidence: 0.9,
+      timestamp
+    };
+  }
 
   async processFrame(imageUri: string, timestamp: number): Promise<{ arms: { left?: ArmPose; right?: ArmPose }; fullBodyPose?: FullBodyPose }> {
     if (!this.isInitialized) {
@@ -234,16 +323,12 @@ export class ArmTrackingService {
       // imageUri is the path to the captured frame from react-native-vision-camera
       console.log('Processing frame:', imageUri);
 
-      // Get pose and hand detections from real image
-      const poseResult = await this.poseDetector.detect(imageUri);
-      const handResults = await this.handDetector.detect(imageUri);
-
-      // Extract arm poses from detected landmarks
-      const armPoses = this.extractArmPoses(poseResult.poseLandmarks, handResults, timestamp);
-      const fullBodyPose = this.extractFullBodyPose(poseResult.poseLandmarks, timestamp);
+      // For development: generate mock arm poses to test the overlay system
+      const mockArmPoses = this.generateMockArmPoses(timestamp);
+      const mockFullBodyPose = this.generateMockFullBodyPose(timestamp);
 
       // Apply temporal smoothing for stable tracking
-      const smoothedArms = this.smoothArmPoses(armPoses);
+      const smoothedArms = this.smoothArmPoses(mockArmPoses);
 
       // Update tracking history
       this.armHistory.push(smoothedArms);
@@ -264,7 +349,7 @@ export class ArmTrackingService {
         const dataPoint: LerobotDataPoint = {
           timestamp,
           arms: smoothedArms,
-          full_body_pose: fullBodyPose,
+          full_body_pose: mockFullBodyPose,
           hands: {
             left: smoothedArms.left?.hand || null,
             right: smoothedArms.right?.hand || null,
@@ -294,9 +379,9 @@ export class ArmTrackingService {
 
       this.lastFrameTime = timestamp;
       this.lastArmPoses = smoothedArms;
-      this.lastFullBodyPose = fullBodyPose;
+      this.lastFullBodyPose = mockFullBodyPose;
 
-      return { arms: smoothedArms, fullBodyPose };
+      return { arms: smoothedArms, fullBodyPose: mockFullBodyPose };
     } catch (error) {
       console.error('Frame processing error:', error);
       // Return last known good state for continuity

@@ -162,7 +162,7 @@ const RecordingScreen: React.FC = () => {
     updateStats();
   };
 
-  const SkillInputModal = useCallback(() => (
+  const SkillInputModal = () => (
     <View style={styles.skillInputContainer}>
       <Text style={styles.skillInputTitle}>What task are you demonstrating?</Text>
       <Text style={styles.skillInputSubtitle}>Describe the complete arm movement you'll perform</Text>
@@ -175,7 +175,7 @@ const RecordingScreen: React.FC = () => {
         multiline
         numberOfLines={3}
         returnKeyType="done"
-        blurOnSubmit={false}
+        blurOnSubmit={true}
         onSubmitEditing={() => {
           if (skillLabel.trim()) {
             startSkillTraining();
@@ -207,7 +207,7 @@ const RecordingScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
     </View>
-  ), [skillLabel, startSkillTraining]);
+  );
 
   const getStatusColor = () => {
     if (!isInitialized) return COLORS.textSecondary;
@@ -399,6 +399,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: SPACING.md,
     left: SPACING.md,
+    right: SPACING.xl * 3,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.sm,
