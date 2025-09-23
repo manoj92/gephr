@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background color -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#1A1A1A" />
+        </shape>
+    </item>
+
+    <!-- Logo -->
+    <item android:gravity="center">
+        <vector
+            android:width="120dp"
+            android:height="120dp"
+            android:viewportWidth="120"
+            android:viewportHeight="120">
+
+            <!-- Outer teal ring -->
+            <path
+                android:fillColor="#2D7D8C"
+                android:pathData="M60,10 A50,50 0 1 1 60,110 A50,50 0 1 1 60,10 Z" />
+
+            <!-- Inner white circle -->
+            <path
+                android:fillColor="#FFFFFF"
+                android:pathData="M60,25 A35,35 0 1 1 60,95 A35,35 0 1 1 60,25 Z" />
+
+            <!-- Left eye -->
+            <path
+                android:fillColor="#00B4D8"
+                android:pathData="M45,50 A7,7 0 1 1 45,64 A7,7 0 1 1 45,50 Z" />
+
+            <!-- Right eye -->
+            <path
+                android:fillColor="#00B4D8"
+                android:pathData="M75,50 A7,7 0 1 1 75,64 A7,7 0 1 1 75,50 Z" />
+
+            <!-- Smile -->
+            <path
+                android:fillColor="#00B4D8"
+                android:pathData="M42,75 Q60,90 78,75 Q60,83 42,75 Z" />
+
+        </vector>
+    </item>
+</layer-list>
