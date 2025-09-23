@@ -4,8 +4,8 @@
   "main": "index.ts",
   "scripts": {
     "start": "react-native start",
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "android-studio": "open -a \"Android Studio\" android",
     "xcode": "open ios/GephrLabsHumanoidTrainingPlatform.xcworkspace",
     "build-android": "./scripts/build-android-native.sh",
@@ -36,6 +36,8 @@
     "@react-navigation/stack": "^6.3.29",
     "@reduxjs/toolkit": "^2.8.2",
     "@shopify/react-native-skia": "v2.0.0-next.4",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-react-native": "^1.0.0",
     "@types/three": "^0.179.0",
     "expo": "53.0.22",
     "expo-av": "~15.1.7",
@@ -45,6 +47,7 @@
     "expo-dev-client": "~5.2.4",
     "expo-document-picker": "~13.1.6",
     "expo-file-system": "~18.1.11",
+    "expo-haptics": "~14.1.4",
     "expo-linear-gradient": "~14.1.5",
     "expo-local-authentication": "~16.0.5",
     "expo-location": "~18.1.6",
@@ -72,11 +75,11 @@
     "react-native-web": "^0.20.0",
     "react-redux": "^9.1.2",
     "three": "^0.179.1",
-    "zustand": "^4.5.4",
-    "expo-haptics": "~14.1.4"
+    "zustand": "^4.5.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@react-native-community/cli": "^20.0.2",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^12.8.2",
     "@types/jest": "^29.5.14",

@@ -13,7 +13,7 @@ interface CameraViewProps {
   handPoses?: HandPose[];
   armPoses?: { left?: ArmPose; right?: ArmPose };
   fullBodyPose?: FullBodyPose;
-  trackingMode?: 'hands' | 'arms' | 'full_body';
+  trackingMode?: 'arms';
 }
 
 const CameraViewComponent: React.FC<CameraViewProps> = ({
@@ -25,10 +25,10 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
   fullBodyPose,
   trackingMode = 'arms'
 }) => {
-  // For arm tracking: front camera for better self-view, back camera for shirt pocket
-  const [facing, setFacing] = useState<'front' | 'back'>(trackingMode === 'arms' ? 'front' : 'back');
+  // Front camera for arm tracking self-view
+  const [facing, setFacing] = useState<'front' | 'back'>('front');
   const [frameRate, setFrameRate] = useState<number>(15);
-  const [zoomLevel, setZoomLevel] = useState<number>(trackingMode === 'arms' ? 0.6 : 0.8);
+  const [zoomLevel, setZoomLevel] = useState<number>(0.6);
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice(facing);
   const frameIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -140,41 +140,12 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
         shirtPocketMode={trackingMode !== 'arms'}
       />
 
-      {/* Tracking mode indicator */}
-      <View style={styles.modeIndicator}>
-        <Icon
-          name={trackingMode === 'arms' ? 'body-outline' : trackingMode === 'hands' ? 'hand-left-outline' : 'person-outline'}
-          size={16}
-          color={COLORS.primary}
-        />
-        <Text style={styles.modeText}>
-          {trackingMode === 'arms' ? 'Arm Tracking' : trackingMode === 'hands' ? 'Hand Tracking' : 'Full Body'}
-        </Text>
-      </View>
 
-      {/* Arm positioning guides */}
-      {trackingMode === 'arms' && !isRecording && !armPoses.left && !armPoses.right && (
+      {/* Positioning guide */}
+      {!isRecording && !armPoses.left && !armPoses.right && (
         <View style={styles.positionGuide}>
           <View style={styles.guideBox}>
-            <Text style={styles.guideText}>Position arms clearly in view</Text>
-            <View style={styles.armGuideContainer}>
-              <View style={styles.armZone}>
-                <Text style={styles.armZoneText}>Left Arm</Text>
-              </View>
-              <View style={styles.armZone}>
-                <Text style={styles.armZoneText}>Right Arm</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {/* Hand guides for hand-only mode */}
-      {trackingMode === 'hands' && !isRecording && handPoses.length === 0 && (
-        <View style={styles.positionGuide}>
-          <View style={styles.guideBox}>
-            <Text style={styles.guideText}>Position hands in view</Text>
-            <View style={styles.handZone} />
+            <Text style={styles.guideText}>Position arms in view</Text>
           </View>
         </View>
       )}
@@ -195,47 +166,18 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
         <Icon name="camera-reverse" size={24} color={COLORS.text} />
       </TouchableOpacity>
 
-      {/* Camera info with enhanced metrics */}
+      {/* Camera info */}
       <View style={styles.cameraInfo}>
         <Text style={styles.cameraInfoText}>
-          {facing === 'front' ? 'Front Camera' : 'Back Camera'}
+          {isRecording ? `${frameRate} FPS` : 'Ready'}
         </Text>
-        <Text style={styles.cameraInfoText}>
-          {isRecording ? `${frameRate} FPS` : `${handPoses.length} hands`}
-        </Text>
-        {trackingMode === 'arms' && (armPoses.left || armPoses.right) && (
+        {(armPoses.left || armPoses.right) && (
           <Text style={styles.cameraInfoText}>
             L: {armPoses.left ? '✓' : '✗'} R: {armPoses.right ? '✓' : '✗'}
           </Text>
         )}
-        {trackingMode === 'hands' && handPoses.length > 0 && (
-          <Text style={styles.cameraInfoText}>
-            {handPoses[0]?.currentAction || 'detecting'}
-          </Text>
-        )}
-        {trackingMode === 'full_body' && fullBodyPose && (
-          <Text style={styles.cameraInfoText}>
-            Body: {fullBodyPose.confidence.toFixed(2)}
-          </Text>
-        )}
       </View>
 
-      {/* Frame rate control */}
-      <View style={styles.frameRateControl}>
-        <TouchableOpacity
-          style={styles.frameRateButton}
-          onPress={() => setFrameRate(Math.max(5, frameRate - 5))}
-        >
-          <Icon name="remove" size={20} color={COLORS.text} />
-        </TouchableOpacity>
-        <Text style={styles.frameRateText}>{frameRate} FPS</Text>
-        <TouchableOpacity
-          style={styles.frameRateButton}
-          onPress={() => setFrameRate(Math.min(30, frameRate + 5))}
-        >
-          <Icon name="add" size={20} color={COLORS.text} />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
@@ -348,26 +290,6 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontWeight: '500',
   },
-  modeIndicator: {
-    position: 'absolute',
-    top: SPACING.md + 60,
-    left: SPACING.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface + 'E0',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '40',
-    zIndex: 100,
-  },
-  modeText: {
-    ...TYPOGRAPHY.small,
-    color: COLORS.primary,
-    fontWeight: '600',
-    marginLeft: SPACING.xs,
-  },
   positionGuide: {
     position: 'absolute',
     top: '30%',
@@ -388,67 +310,6 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body,
     color: COLORS.text,
     marginBottom: SPACING.sm,
-  },
-  handZone: {
-    width: 120,
-    height: 120,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
-    borderStyle: 'dashed',
-  },
-  armGuideContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: SPACING.sm,
-  },
-  armZone: {
-    width: 80,
-    height: 160,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.primary + '10',
-  },
-  armZoneText: {
-    ...TYPOGRAPHY.small,
-    color: COLORS.primary,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  frameRateControl: {
-    position: 'absolute',
-    bottom: SPACING.md + 40,
-    left: SPACING.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface + 'E0',
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '40',
-    zIndex: 100,
-  },
-  frameRateButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.primary + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  frameRateText: {
-    ...TYPOGRAPHY.small,
-    color: COLORS.text,
-    fontWeight: '600',
-    marginHorizontal: SPACING.sm,
-    minWidth: 50,
-    textAlign: 'center',
   },
 });
 

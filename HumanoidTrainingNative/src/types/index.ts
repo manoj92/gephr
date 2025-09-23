@@ -108,13 +108,16 @@ export interface LerobotDataPoint {
 }
 
 export interface ArmCommand {
-  shoulder_angles: [number, number, number]; // flexion, abduction, rotation
-  elbow_angle: number;
-  wrist_angles: [number, number]; // flexion, deviation
+  shoulder_angles: [number, number, number];  // [pitch, roll, yaw] in radians
+  elbow_angle: number;  // Elbow flexion in radians
+  wrist_angles: [number, number];  // [pitch, roll] in radians
   gripper_state: 'open' | 'closed' | 'closing' | 'opening';
-  gripper_force?: number;
-  target_position?: [number, number, number];
-  movement_speed?: number;
+  gripper_force?: number;  // 0.0 to 1.0
+  target_position?: [number, number, number];  // [x, y, z] in meters (robot frame)
+  movement_speed?: number;  // 0.0 to 1.0
+  stiffness?: number;  // Joint stiffness 0.0 to 1.0
+  damping?: number;  // Joint damping 0.0 to 1.0
+  trajectory_type?: 'linear' | 'joint' | 'cartesian';
 }
 
 export interface RobotConnection {

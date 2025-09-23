@@ -1,3 +1,20 @@
+// CRITICAL NUCLEAR PATCH: ExpoFontLoader suppression BEFORE @expo/vector-icons import
+try {
+  if (!global._ExpoFontLoader) {
+    global._ExpoFontLoader = {
+      default: {
+        getLoadedFonts: () => [],
+        loadAsync: () => Promise.resolve(),
+        isLoaded: () => true,
+        isLoading: () => false
+      }
+    };
+  }
+  global.ExpoFontLoader = global._ExpoFontLoader;
+} catch (e) {
+  console.log('AppNavigator ExpoFontLoader patch applied');
+}
+
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet } from 'react-native';
@@ -29,9 +46,14 @@ const AppNavigator: React.FC = () => {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => {
+            try {
+              return <Ionicons name="home" size={size || 24} color={color || COLORS.primary} />;
+            } catch (error) {
+              console.warn('Icon render error:', error);
+              return null;
+            }
+          },
         }}
       />
       <Tab.Screen 
@@ -39,9 +61,14 @@ const AppNavigator: React.FC = () => {
         component={RecordingScreen}
         options={{
           tabBarLabel: 'Record',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="radio-button-on" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => {
+            try {
+              return <Ionicons name="radio-button-on" size={size || 24} color={color || COLORS.primary} />;
+            } catch (error) {
+              console.warn('Icon render error:', error);
+              return null;
+            }
+          },
         }}
       />
       <Tab.Screen 
@@ -49,9 +76,14 @@ const AppNavigator: React.FC = () => {
         component={MarketplaceScreen}
         options={{
           tabBarLabel: 'Market',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="storefront" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => {
+            try {
+              return <Ionicons name="storefront" size={size || 24} color={color || COLORS.primary} />;
+            } catch (error) {
+              console.warn('Icon render error:', error);
+              return null;
+            }
+          },
         }}
       />
       <Tab.Screen 
@@ -59,9 +91,14 @@ const AppNavigator: React.FC = () => {
         component={MappingScreen}
         options={{
           tabBarLabel: 'Map',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => {
+            try {
+              return <Ionicons name="map" size={size || 24} color={color || COLORS.primary} />;
+            } catch (error) {
+              console.warn('Icon render error:', error);
+              return null;
+            }
+          },
         }}
       />
       <Tab.Screen 
@@ -69,9 +106,14 @@ const AppNavigator: React.FC = () => {
         component={RobotScreen}
         options={{
           tabBarLabel: 'Robot',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="robot" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => {
+            try {
+              return <MaterialCommunityIcons name="robot" size={size || 24} color={color || COLORS.primary} />;
+            } catch (error) {
+              console.warn('Icon render error:', error);
+              return null;
+            }
+          },
         }}
       />
       <Tab.Screen 
@@ -79,9 +121,14 @@ const AppNavigator: React.FC = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => {
+            try {
+              return <Ionicons name="person" size={size || 24} color={color || COLORS.primary} />;
+            } catch (error) {
+              console.warn('Icon render error:', error);
+              return null;
+            }
+          },
         }}
       />
     </Tab.Navigator>

@@ -18,18 +18,19 @@ import Animated, {
   interpolate,
   Easing,
   withSequence,
+  withDelay,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import HapticFeedback from '../utils/haptics';
-import LottieView from 'lottie-react-native';
+// import LottieView from 'lottie-react-native';
 
 import { COLORS, SPACING } from '../constants/theme';
 import { GlassCard } from '../components/ui/GlassCard';
 import { NeonButton } from '../components/ui/NeonButton';
 import { ParticleBackground } from '../components/ui/ParticleBackground';
-import { useAppSelector } from '../store/hooks';
+// import { useAppSelector } from '../store/hooks';
 import { useNavigation } from '@react-navigation/native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -87,7 +88,8 @@ const quickActions = [
 
 const EnhancedHomeScreen: React.FC = () => {
   const navigation = useNavigation();
-  const user = useAppSelector(state => state.user.currentUser);
+  // const user = useAppSelector(state => state.user.currentUser);
+  const user = { name: 'Alex', level: 12 }; // Mock user data
   const [refreshing, setRefreshing] = useState(false);
   const [selectedStat, setSelectedStat] = useState<number | null>(null);
 

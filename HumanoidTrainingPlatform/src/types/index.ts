@@ -3,14 +3,14 @@ export interface HandKeypoint {
   x: number;
   y: number;
   z: number;
-  name: string;
-  score: number;
+  confidence: number;
 }
 
 export interface HandPose {
-  keypoints: HandKeypoint[];
-  handedness: 'left' | 'right';
-  score: number;
+  landmarks: HandKeypoint[];
+  gesture: string;
+  confidence: number;
+  timestamp: Date;
 }
 
 // Camera frame data
@@ -23,21 +23,16 @@ export interface CameraFrame {
 
 // LeRobot compatible data structures
 export interface LerobotAction {
-  type: 'pick' | 'place' | 'move' | 'rotate' | 'open' | 'close' | 'idle';
-  parameters: Record<string, any>;
+  action_type: 'pick' | 'place' | 'move' | 'rotate' | 'open' | 'close' | 'idle' | 'grasp' | 'release' | 'gesture' | 'navigate' | 'speak' | 'wait' | 'complex';
+  action_parameters: Record<string, any>;
   timestamp: number;
   confidence: number;
 }
 
 export interface LerobotObservation {
   image: any; // Camera frame data
-  state: {
-    hand_positions: Array<{
-      position: { x: number; y: number; z: number };
-      orientation: { roll: number; pitch: number; yaw: number };
-      gesture: string;
-    }>;
-  };
+  hand_poses: HandPose[];
+  environment_state?: any;
   timestamp: number;
 }
 
@@ -69,6 +64,7 @@ export interface RobotConnection {
   id: string;
   name: string;
   type: RobotType;
+  status: 'connected' | 'disconnected' | 'connecting' | 'error';
   ipAddress: string;
   port: number;
   isConnected: boolean;
@@ -81,29 +77,28 @@ export interface RobotConnection {
 }
 
 export interface RobotCommand {
-  id: string;
-  type: 'move' | 'rotate' | 'pick' | 'place' | 'open' | 'close' | 'emergency_stop';
-  parameters: Record<string, any>;
-  timestamp: number;
+  type: 'move' | 'rotate' | 'pick' | 'place' | 'open' | 'close' | 'emergency_stop' | 'grasp' | 'release' | 'gesture' | 'navigate' | 'speak';
+  parameters?: Record<string, any>;
+  timestamp: Date;
   priority: 'low' | 'normal' | 'high' | 'emergency';
   retries?: number;
   maxRetries?: number;
 }
 
 export interface RobotState {
-  position: [number, number, number];
-  orientation: [number, number, number, number]; // quaternion
-  joint_positions: number[];
-  gripper_state: 'open' | 'closed' | 'moving';
-  battery_level: number;
-  batteryLevel?: number; // Alternative field name for compatibility
-  is_moving: boolean;
-  current_task?: string;
-  temperature?: number;
-  errors?: string[];
-  warnings?: string[];
-  capabilities?: string[];
-  protocol_version?: string;
+  id: string;
+  name: string;
+  type: RobotType;
+  status: 'connected' | 'disconnected' | 'error';
+  battery: number;
+  position: { x: number; y: number; z: number };
+  orientation: { roll: number; pitch: number; yaw: number };
+  jointStates: { [key: string]: { position: number; velocity: number; effort: number } };
+  sensorData: { [key: string]: any };
+  lastUpdate: Date;
+  capabilities: string[];
+  firmware?: string;
+  ip?: string;
 }
 
 // User and session management

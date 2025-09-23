@@ -180,7 +180,7 @@ export const saveSettings = createAsyncThunk(
 
 export const resetSettings = createAsyncThunk(
   'settings/resetSettings',
-  async (category?: keyof Pick<SettingsSliceState, 'notifications' | 'privacy' | 'recording' | 'robot' | 'app'>, { rejectWithValue }) => {
+  async (category: keyof Pick<SettingsSliceState, 'notifications' | 'privacy' | 'recording' | 'robot' | 'app'> | undefined, { rejectWithValue }) => {
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
       

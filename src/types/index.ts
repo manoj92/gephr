@@ -4,13 +4,17 @@ export interface HandKeypoint {
   y: number;
   z?: number;
   confidence: number;
+  name?: string;
+  score?: number;
 }
 
 export interface HandPose {
-  landmarks: HandKeypoint[];
+  landmarks?: HandKeypoint[];
+  keypoints?: HandKeypoint[];
   handedness: 'left' | 'right';
   confidence: number;
   timestamp: number;
+  score?: number;
 }
 
 export interface GestureData {
@@ -49,6 +53,8 @@ export interface LerobotDataPoint {
   action: LerobotAction;
   reward?: number;
   done: boolean;
+  info?: any;
+  timestamp: number;
   metadata: {
     task_id: string;
     user_id: string;
@@ -72,12 +78,18 @@ export interface RobotConnection {
   type: 'unitree_g1' | 'boston_dynamics' | 'tesla_bot' | 'custom';
   status: 'connected' | 'disconnected' | 'connecting' | 'error';
   ipAddress?: string;
+  port?: number;
+  isConnected?: boolean;
   bluetoothId?: string;
   capabilities: RobotCapability[];
   currentTask?: string;
   batteryLevel?: number;
+  lastSeen?: Date;
   lastHeartbeat: number;
+  signalStrength: number;
 }
+
+export type RobotType = 'unitree_g1' | 'boston_dynamics' | 'tesla_bot' | 'custom';
 
 export type RobotCapability = 
   | 'navigation'

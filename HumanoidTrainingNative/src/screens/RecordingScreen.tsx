@@ -12,19 +12,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../constants/theme';
 import HandTrackingService from '../services/HandTrackingService';
+import ArmTrackingService from '../services/ArmTrackingService';
 import LeRobotExportService from '../services/LeRobotExportService';
-import { HandPose } from '../types';
+import { HandPose, ArmPose, FullBodyPose } from '../types';
 import CameraView from '../components/CameraView';
 import Logo from '../components/Logo';
 
 const RecordingScreen: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [handPoses, setHandPoses] = useState<HandPose[]>([]);
+  const [armPoses, setArmPoses] = useState<{ left?: ArmPose; right?: ArmPose }>({});
+  const [fullBodyPose, setFullBodyPose] = useState<FullBodyPose | undefined>();
   const [isInitialized, setIsInitialized] = useState(false);
   const [skillLabel, setSkillLabel] = useState('');
   const [stats, setStats] = useState<any>({});
   const [showSkillInput, setShowSkillInput] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const trackingMode = 'arms';
 
   const trackingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -39,16 +43,16 @@ const RecordingScreen: React.FC = () => {
 
   const initializeHandTracking = useCallback(async () => {
     try {
-      await HandTrackingService.initialize();
+      await ArmTrackingService.initialize();
       setIsInitialized(true);
       updateStats();
     } catch (error) {
-      Alert.alert('Error', 'Failed to initialize hand tracking');
+      Alert.alert('Error', 'Failed to initialize arm tracking');
     }
   }, []);
 
   const updateStats = useCallback(() => {
-    const currentStats = HandTrackingService.getRecordingStats();
+    const currentStats = ArmTrackingService.getStats();
     setStats(currentStats);
   }, []);
 
@@ -56,11 +60,12 @@ const RecordingScreen: React.FC = () => {
     if (!isInitialized || !hasCameraPermission) return;
 
     try {
-      const detectedHands = await HandTrackingService.processFrame(imageUri, timestamp);
-      setHandPoses(detectedHands);
+      // Use ArmTrackingService for arms+hands tracking
+      const result = await ArmTrackingService.processFrame(imageUri, timestamp);
+      setArmPoses(result.arms);
+      setFullBodyPose(result.fullBodyPose);
 
       if (isRecording) {
-        HandTrackingService.recordFrame(imageUri, detectedHands, timestamp);
         updateStats();
       }
     } catch (error) {
@@ -87,13 +92,13 @@ const RecordingScreen: React.FC = () => {
     }
   };
 
-  const startSkillTraining = () => {
+  const startSkillTraining = useCallback(() => {
     if (!skillLabel.trim()) {
       setShowSkillInput(true);
       return;
     }
 
-    HandTrackingService.setCurrentSkill(skillLabel.trim());
+    ArmTrackingService.setCurrentSkill(skillLabel.trim());
     setIsRecording(true);
     setShowSkillInput(false);
 
@@ -106,7 +111,7 @@ const RecordingScreen: React.FC = () => {
 
     updateStats();
     console.log(`Started training skill: ${skillLabel}`);
-  };
+  }, [skillLabel, hasCameraPermission, updateStats]);
 
   const stopSkillTraining = () => {
     setIsRecording(false);
@@ -129,7 +134,7 @@ const RecordingScreen: React.FC = () => {
   };
 
   const handleExportAllData = async () => {
-    const stats = HandTrackingService.getStats();
+    const stats = ArmTrackingService.getStats();
 
     if (stats.episodes === 0) {
       Alert.alert('No Data', 'No training data has been recorded yet');
@@ -137,13 +142,13 @@ const RecordingScreen: React.FC = () => {
     }
 
     try {
-      const episodes = HandTrackingService.getAllEpisodes();
+      const episodes = ArmTrackingService.getAllEpisodes();
       const taskName = stats.currentSkill || 'mixed_tasks';
 
       await LeRobotExportService.exportToLeRobotFormat(episodes, taskName, 'humanoid');
 
       // Also export the original format
-      await HandTrackingService.exportAndShare();
+      await ArmTrackingService.exportAndShare();
     } catch (error) {
       Alert.alert('Export Error', 'Failed to export training data');
     }
@@ -151,7 +156,7 @@ const RecordingScreen: React.FC = () => {
 
   const handleStartNewTask = () => {
     // Clear all existing data and show skill input modal
-    HandTrackingService.clearAllData();
+    ArmTrackingService.clearAllData();
     setSkillLabel('');
     setShowSkillInput(true);
     updateStats();
@@ -159,15 +164,14 @@ const RecordingScreen: React.FC = () => {
 
   const SkillInputModal = useCallback(() => (
     <View style={styles.skillInputContainer}>
-      <Text style={styles.skillInputTitle}>What {trackingMode} task are you demonstrating?</Text>
-      <Text style={styles.skillInputSubtitle}>Describe the complete {trackingMode} activity you'll perform</Text>
+      <Text style={styles.skillInputTitle}>What task are you demonstrating?</Text>
+      <Text style={styles.skillInputSubtitle}>Describe the complete arm movement you'll perform</Text>
       <TextInput
         style={styles.skillInput}
         value={skillLabel}
         onChangeText={setSkillLabel}
-        placeholder={trackingMode === 'arms' ? "e.g., 'reaching and grasping', 'bimanual assembly', 'arm coordination'" : trackingMode === 'hands' ? "e.g., 'precision grasping', 'finger manipulation'" : "e.g., 'full body coordination', 'complex movements'"}
+        placeholder="e.g., 'reaching and grasping', 'bimanual assembly', 'object manipulation'"
         placeholderTextColor={COLORS.textSecondary}
-        autoFocus
         multiline
         numberOfLines={3}
         returnKeyType="done"
@@ -203,7 +207,7 @@ const RecordingScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
     </View>
-  ), [skillLabel]);
+  ), [skillLabel, startSkillTraining]);
 
   const getStatusColor = () => {
     if (!isInitialized) return COLORS.textSecondary;
@@ -228,8 +232,9 @@ const RecordingScreen: React.FC = () => {
         <View style={styles.header}>
           <Logo size={80} style={styles.logo} />
           <Text style={styles.title}>Humanoid Training</Text>
-          <Text style={styles.subtitle}>Capture human movements for robot learning</Text>
+          <Text style={styles.subtitle}>Capture arm movements for robot learning</Text>
         </View>
+
 
         {/* Camera Feed */}
         <View style={styles.cameraContainer}>
@@ -238,6 +243,9 @@ const RecordingScreen: React.FC = () => {
             isRecording={isRecording}
             onPermissionChange={setHasCameraPermission}
             handPoses={handPoses}
+            armPoses={armPoses}
+            fullBodyPose={fullBodyPose}
+            trackingMode={trackingMode}
           />
 
           {/* Status Indicator Overlay */}

@@ -37,21 +37,29 @@ export const scanForRobots = createAsyncThunk(
           id: 'unitree-g1-001',
           name: 'Unitree G1 #001',
           type: 'unitree_g1' as RobotType,
+          status: 'disconnected' as const,
           ipAddress: '192.168.1.100',
           port: 8080,
           isConnected: false,
           batteryLevel: 85,
           lastSeen: new Date(),
+          capabilities: ['navigation', 'manipulation', 'balance'],
+          lastHeartbeat: Date.now(),
+          signalStrength: 85,
         },
         {
           id: 'custom-robot-001',
           name: 'Custom Robot #001',
           type: 'custom' as RobotType,
+          status: 'disconnected' as const,
           ipAddress: '192.168.1.101',
           port: 8081,
           isConnected: false,
           batteryLevel: 72,
           lastSeen: new Date(),
+          capabilities: ['navigation', 'manipulation'],
+          lastHeartbeat: Date.now(),
+          signalStrength: 72,
         },
       ];
 
@@ -92,18 +100,19 @@ export const sendRobotCommand = createAsyncThunk(
       
       // Generate mock robot state response
       const mockState: RobotState = {
-        timestamp: new Date(),
+        timestamp: Date.now(),
         position: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 2 },
-        orientation: { 
+        rotation: { 
           x: Math.random() * 0.1, 
           y: Math.random() * 0.1, 
           z: Math.random() * 0.1, 
           w: 1 - Math.random() * 0.01 
         },
-        jointPositions: Array.from({ length: 12 }, () => Math.random() * Math.PI - Math.PI/2),
-        batteryLevel: 85 - Math.random() * 5,
-        isMoving: true,
-        errors: [],
+        joint_positions: Array.from({ length: 12 }, () => Math.random() * Math.PI - Math.PI/2),
+        joint_velocities: Array.from({ length: 12 }, () => 0),
+        battery_level: 85 - Math.random() * 5,
+        error_state: false,
+        connection_quality: 0.95,
       };
       
       return { command, state: mockState };

@@ -19,6 +19,7 @@
     "@react-navigation/native": "^7.1.17",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-react-native": "^1.0.0",
+    "expo-asset": "^12.0.9",
     "react": "19.0.0",
     "react-native": "0.79.5",
     "react-native-fs": "^2.20.0",

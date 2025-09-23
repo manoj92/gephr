@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 // ==================== VALIDATION TYPES ====================
 
 export interface ValidationRule {
-  validator: (value: any) => boolean | string;
+  validator: (value: any, allValues?: any) => boolean | string;
   message: string;
 }
 

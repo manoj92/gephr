@@ -4,7 +4,7 @@ import { mediaPipeIntegration } from './MediaPipeIntegration';
 
 interface CameraDevice {
   id: string;
-  type: CameraType;
+  type: any;
   position: 'front' | 'back' | 'external';
   isActive: boolean;
   lastFrame: any;
@@ -65,7 +65,7 @@ export class MultiCameraSyncService {
     // Add front camera
     devices.push({
       id: 'camera_front',
-      type: CameraType.front,
+      type: 'front' as any,
       position: 'front',
       isActive: false,
       lastFrame: null,
@@ -76,7 +76,7 @@ export class MultiCameraSyncService {
     // Add back camera
     devices.push({
       id: 'camera_back',
-      type: CameraType.back,
+      type: 'back' as any,
       position: 'back',
       isActive: false,
       lastFrame: null,
@@ -89,7 +89,7 @@ export class MultiCameraSyncService {
     if (this.detectExternalCameras()) {
       devices.push({
         id: 'camera_external_1',
-        type: CameraType.back,
+        type: 'back' as any,
         position: 'external',
         isActive: false,
         lastFrame: null,
